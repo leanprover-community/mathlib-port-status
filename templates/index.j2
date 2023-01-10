@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mathlib porting status</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container-fluid">
+        <h1>File list</h1>
+        <table>
+            <tr>
+                <th>File</th>
+                <th>PR</th>
+                <th>commit</th>
+                <th>comments</th>
+            </tr>
+            {%- for f_import, f_status in status.file_statuses.items() %}
+                <tr {%- if f_status.ported %}class="success" {% endif %}>
+                    <th scope="row">
+                        <code>{{f_import}}</code>
+                    </th>
+                    <td>
+                        {%- if f_status.mathlib4_pr %}
+                            <a href="https://github.com/leanprover-community/mathlib/pull/{{f_import.mathlib4_pr}}">#{{f_import.mathlib4_pr}}</a>
+                        {%- endif %}
+                    </td>
+                    <td>
+                        {%- if f_status.mathlib4_hash %}
+                            <a href="https://github.com/leanprover-community/mathlib/commits/{{f_import.mathlib4_hash}}">#{{f_import.mathlib4_hash}}</a>
+                        {%- endif %}
+                    </td>
+                    <td>
+                        {{f_status.comments}}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>
