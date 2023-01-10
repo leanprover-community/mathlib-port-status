@@ -11,42 +11,100 @@
     <link href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
     <script type="text/javascript">
     $(document).ready(function () {
-        $('#main-table').DataTable();
+        let tables = $('.main-table').DataTable({
+            // the default, but no search
+            dom: "<'row'<'col-sm-12 col-md-6'l>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        });
+
+        $('#search-input').on('search', function(e) {
+            tables.search(this.value).draw();
+        });
     });
     </script>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg bg-light">
     <div class="container">
-        <h1>File list</h1>
-        <table class="table  table-sm" id="main-table">
+        <a class="navbar-brand" href="#">Mathlib porting status</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <input class="form-control me-2" type="search" incremental placeholder="Search" aria-label="Search" id="search-input">
+        </div>
+    </div>
+    </nav>
+    <div class="container">
+        <h2>In progress files</h2>
+        <table class="table table-sm main-table">
             <thead>
                 <tr>
-                    <th></th>
                     <th>File</th>
                     <th>PR</th>
-                    <th>commit</th>
                     <th>comments</th>
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_status in status.file_statuses.items() %}
-                <tr {%- if f_status.ported %} class="table-success" {% elif f_status.mathlib4_pr %} class="table-warning" {% endif %}>
-                    <td>
-                        {%- if f_status.ported %}✔️{% elif f_status.mathlib4_pr %}⏳{% endif%}
-                    </td>
+            {%- for f_import, f_status in status.file_statuses.items() if not f_status.ported and f_status.mathlib4_pr %}
+                <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>
-                        {%- if f_status.mathlib4_pr %}
-                            <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_status.mathlib4_pr}}">#{{f_status.mathlib4_pr}}</a>
-                        {%- endif %}
+                        <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_status.mathlib4_pr}}">#{{f_status.mathlib4_pr}}</a>
+                    </td>
+                    <td>
+                        {{f_status.comments}}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <h2>Ported files</h2>
+        <table class="table table-sm main-table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>commit</th>
+                    <th>comments</th>
+                </tr>
+            </thead>
+            <tbody>
+            {%- for f_import, f_status in status.file_statuses.items() if f_status.ported %}
+                <tr>
+                    <td>
+                        <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
+                            <code>{{f_import}}</code></a>
                     </td>
                     <td>
                         {%- if f_status.mathlib3_hash %}
                             <a href="https://github.com/leanprover-community/mathlib/commits/{{f_status.mathlib3_hash}}">{{f_status.mathlib3_hash[:8]}}</a>
                         {%- endif %}
+                    </td>
+                    <td>
+                        {{f_status.comments}}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <h2>Unported files</h2>
+        <table class="table table-sm main-table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>comments</th>
+                </tr>
+            </thead>
+            <tbody>
+            {%- for f_import, f_status in status.file_statuses.items() if not f_status.ported and not f_status.mathlib4_pr %}
+                <tr>
+                    <td>
+                        <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
+                            <code>{{f_import}}</code></a>
                     </td>
                     <td>
                         {{f_status.comments}}
