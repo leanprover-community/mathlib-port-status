@@ -19,12 +19,15 @@
     <div class="container">
         <h1>File list</h1>
         <table class="table" id="main-table">
-            <tr>
-                <th>File</th>
-                <th>PR</th>
-                <th>commit</th>
-                <th>comments</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>PR</th>
+                    <th>commit</th>
+                    <th>comments</th>
+                </tr>
+            </thead>
+            <tbody>
             {%- for f_import, f_status in status.file_statuses.items() %}
                 <tr {%- if f_status.ported %} class="table-success" {% elif f_status.mathlib4_pr %} class="table-warning" {% endif %}>
                     <th scope="row">
@@ -45,6 +48,7 @@
                     </td>
                 </tr>
             {% endfor %}
+            </tbody>
         </table>
     </div>
 </body>
