@@ -18,7 +18,7 @@
 <body>
     <div class="container">
         <h1>File list</h1>
-        <table class="table" id="main-table">
+        <table class="table  table-sm" id="main-table">
             <thead>
                 <tr>
                     <th>File</th>
@@ -30,9 +30,13 @@
             <tbody>
             {%- for f_import, f_status in status.file_statuses.items() %}
                 <tr {%- if f_status.ported %} class="table-success" {% elif f_status.mathlib4_pr %} class="table-warning" {% endif %}>
-                    <th scope="row">
-                        <code>{{f_import}}</code>
-                    </th>
+                    <td>
+                        {%- if f_status.ported %}✔️{% elif f_status.mathlib4_pr %}⏳{% endif%}
+                    </td>
+                    <td>
+                        <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
+                            <code>{{f_import}}</code></a>
+                    </td>
                     <td>
                         {%- if f_status.mathlib4_pr %}
                             <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_status.mathlib4_pr}}">#{{f_status.mathlib4_pr}}</a>
