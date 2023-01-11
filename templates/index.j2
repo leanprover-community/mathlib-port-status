@@ -44,6 +44,8 @@
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
             setTheme(getTheme());
         })
+
+        window.addEventListener('storage', (event) => setTheme(getTheme()));
     });
     </script>
 </head>
