@@ -129,13 +129,13 @@
             </thead>
             <tbody>
             {%- for f_import, f_data in unported.items() %}
-                <tr>
+                {%- set parts = f_data.dep_counts %}
+                <tr {%- if parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>{{f_data.status.comments}}</td>
-                    {%- set parts = f_data.dep_counts %}
                     {%- set IN_PROGRESS_EQUIV_UNPORTED = 5 %}
                     <td data-sort="{{parts[0]*10000*IN_PROGRESS_EQUIV_UNPORTED+parts[1]*10000+parts[2]}}">
                     {%- set plus = joiner(" + ") %}
