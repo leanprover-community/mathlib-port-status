@@ -36,14 +36,14 @@
         </div>
     </div>
     </nav>
-    {% set count = (ported|length) + in_progress|length + (unported|length) %}
-    {% set p_ported = 100 * (ported|length) / count %}
-    {% set p_in_progress = 100 * in_progress|length / count %}
+    {%- set count = (ported|length) + in_progress|length + (unported|length) %}
+    {%- set p_ported = 100 * (ported|length) / count %}
+    {%- set p_in_progress = 100 * in_progress|length / count %}
 
-    {% set l_ported = ported.values()|rejectattr(1, "none")|sum(attribute=1) %}
-    {% set l_in_progress = in_progress.values()|rejectattr(1, "none")|sum(attribute=1) %}
-    {% set l_unported = unported.values()|rejectattr(1, "none")|sum(attribute=1) %}
-    {% set l_count = l_ported + l_in_progress + l_unported %}
+    {%- set l_ported = ported.values()|rejectattr('lines', "none")|sum(attribute='lines') %}
+    {%- set l_in_progress = in_progress.values()|rejectattr('lines', "none")|sum(attribute='lines') %}
+    {%- set l_unported = unported.values()|rejectattr('lines', "none")|sum(attribute='lines') %}
+    {%- set l_count = l_ported + l_in_progress + l_unported %}
     <div class="container">
         <div class="progress my-1">
             <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
@@ -67,27 +67,25 @@
                     <th>File</th>
                     <th>PR</th>
                     <th>comments</th>
+                    <th title="Number of files depending on this file">dependents</th>
                     <th>lines</th>
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, (f_status, f_lines) in in_progress.items() %}
+            {%- for f_import, f_data in in_progress.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>
-                        <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_status.mathlib4_pr}}">#{{f_status.mathlib4_pr}}</a>
+                        <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_data.status.mathlib4_pr}}">#{{f_data.status.mathlib4_pr}}</a>
                     </td>
-                    <td>
-                        {{f_status.comments if f_status.comments}}
-                    </td>
-                    <td>
-                        {{f_lines if f_lines}}
-                    </td>
+                    <td>{{f_data.status.comments if f_data.status.comments}}</td>
+                    <td>{{f_data.dependents|length}}</td>
+                    <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
-            {% endfor %}
+            {%- endfor %}
             </tbody>
         </table>
         <h2>Ported files</h2>
@@ -101,25 +99,21 @@
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, (f_status, f_lines) in ported.items() %}
+            {%- for f_import, f_data in ported.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>
-                        {%- if f_status.mathlib3_hash %}
-                            <a href="https://github.com/leanprover-community/mathlib/commits/{{f_status.mathlib3_hash}}">{{f_status.mathlib3_hash[:8]}}</a>
+                        {%- if f_data.status.mathlib3_hash %}
+                            <a href="https://github.com/leanprover-community/mathlib/commits/{{f_data.status.mathlib3_hash}}">{{f_data.status.mathlib3_hash[:8]}}</a>
                         {%- endif %}
                     </td>
-                    <td>
-                        {{f_status.comments}}
-                    </td>
-                    <td>
-                        {{f_lines if f_lines}}
-                    </td>
+                    <td>{{f_data.status.comments}}</td>
+                    <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
-            {% endfor %}
+            {%- endfor %}
             </tbody>
         </table>
         <h2>Unported files</h2>
@@ -128,24 +122,28 @@
                 <tr>
                     <th>File</th>
                     <th>comments</th>
+                    <th title="Number of files needed by this file">dependencies</th>
                     <th>lines</th>
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, (f_status, f_lines) in unported.items() %}
+            {%- for f_import, f_data in unported.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
-                    <td>
-                        {{f_status.comments}}
+                    <td>{{f_data.status.comments}}</td>
+                    {%- set parts = f_data.dep_counts %}
+                    <td data-sort="{{parts|join(' ')}}">
+                    {%- set plus = joiner(" + ") %}
+                    {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
+                    {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
+                    {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
                     </td>
-                    <td>
-                        {{f_lines if f_lines}}
-                    </td>
+                    <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
-            {% endfor %}
+            {%- endfor %}
             </tbody>
         </table>
     </div>
