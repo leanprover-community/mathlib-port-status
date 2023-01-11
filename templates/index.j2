@@ -123,6 +123,7 @@
                     <th>File</th>
                     <th>comments</th>
                     <th title="Number of files needed by this file">dependencies</th>
+                    <th title="Number of files depending on this file">dependents</th>
                     <th>lines</th>
                 </tr>
             </thead>
@@ -141,6 +142,7 @@
                     {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
                     {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
                     </td>
+                    <td>{{f_data.dependents|length}}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
             {%- endfor %}
