@@ -136,7 +136,8 @@
                     </td>
                     <td>{{f_data.status.comments}}</td>
                     {%- set parts = f_data.dep_counts %}
-                    <td data-sort="{{parts|join(',')}}">
+                    {%- set IN_PROGRESS_EQUIV_UNPORTED = 5 %}
+                    <td data-sort="{{parts[0]*10000*IN_PROGRESS_EQUIV_UNPORTED+parts[1]*10000+parts[2]}}">
                     {%- set plus = joiner(" + ") %}
                     {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
                     {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
