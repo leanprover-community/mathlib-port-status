@@ -1,13 +1,14 @@
-from pathlib import Path
-import jinja2
-import networkx as nx
-import re
-from typing import Optional, List
 from dataclasses import dataclass, field
-
-from mathlibtools.file_status import PortStatus, FileStatus
-
 from enum import Enum
+import functools
+from pathlib import Path
+import re
+import sys
+from typing import Optional, List
+
+import jinja2
+from mathlibtools.file_status import PortStatus, FileStatus
+import networkx as nx
 
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
@@ -49,10 +50,10 @@ class PortState(Enum):
 class Mathlib3FileData:
     status: FileStatus
     lines: Optional[int]
-    dependents: List['Mathlib3FileData'] = field(default_factory=list)
-    dependencies: List['Mathlib3FileData'] = field(default_factory=list)
+    dependents: Optional[List['Mathlib3FileData']] = None
+    dependencies: Optional[List['Mathlib3FileData']] = None
 
-    @property
+    @functools.cached_property
     def state(self):
         if self.status.ported:
             return PortState.PORTED
@@ -61,11 +62,22 @@ class Mathlib3FileData:
         else:
             return PortState.UNPORTED
     
-    @property
+    @functools.cached_property
     def dep_counts(self):
-        return [
-            len([x for x in self.dependencies if x.state == s])
-            for s in PortState]
+        if self.dependencies:
+            return tuple(
+                len([x for x in self.dependencies if x.state == s])
+                for s in PortState)
+        else:
+            return None
+
+    @functools.cached_property
+    def dep_counts_sort_key(self) -> int:
+        IN_PROGRESS_EQUIV_UNPORTED = 5
+        if self.dep_counts is None:
+            return sys.maxsize
+        u, i, p = self.dep_counts
+        return u*10000*IN_PROGRESS_EQUIV_UNPORTED+i*10000+p
 
 status = PortStatus.deserialize_old()
 
@@ -103,11 +115,12 @@ with (build_dir / 'html' / 'index.html').open('w') as index_f:
         PortState.UNPORTED: unported,
     }
     for f_import, f_data in data.items():
-        f_data.dependents = [
-            data[k] for k in nx.descendants(graph, f_import) if k in data
-        ]
-        f_data.dependencies = [
-            data[k] for k in nx.ancestors(graph, f_import) if k in data
-        ]
+        if f_import in graph:
+            f_data.dependents = [
+                data[k] for k in nx.descendants(graph, f_import) if k in data
+            ]
+            f_data.dependencies = [
+                data[k] for k in nx.ancestors(graph, f_import) if k in data
+            ]
         groups[f_data.state][f_import] = f_data
     index_f.write(t.render(ported=ported, unported=unported, in_progress=in_progress))

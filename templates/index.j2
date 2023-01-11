@@ -34,6 +34,9 @@
             dom: "<'row'<'col-sm-12 col-md-6'l>>" +
                 "<'row'<'col-sm-12'tr>>" +
                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            columnDefs: [
+                { targets: 'lines-column', width: '4em'},
+            ]
         });
 
         $('#search-input').on('search', function(e) {
@@ -86,14 +89,14 @@
                 style="width: {{l_in_progress / l_count * 100}}%" aria-valuenow="{{l_in_progress}}" aria-valuemin="0" aria-valuemax="{{l_count}}"></div>
         </div>
         <h2>In progress files</h2>
-        <table class="table table-sm main-table">
+        <table class="table table-sm main-table in-progress-table">
             <thead>
                 <tr>
                     <th>File</th>
                     <th>PR</th>
                     <th>comments</th>
                     <th title="Number of files depending on this file">dependents</th>
-                    <th>lines</th>
+                    <th class="lines-column">lines</th>
                 </tr>
             </thead>
             <tbody>
@@ -107,20 +110,20 @@
                         <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_data.status.mathlib4_pr}}">#{{f_data.status.mathlib4_pr}}</a>
                     </td>
                     <td>{{f_data.status.comments if f_data.status.comments}}</td>
-                    <td>{{f_data.dependents|length}}</td>
+                    <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
             {%- endfor %}
             </tbody>
         </table>
         <h2>Ported files</h2>
-        <table class="table table-sm main-table">
+        <table class="table table-sm main-table ported-table">
             <thead>
                 <tr>
                     <th>File</th>
                     <th>commit</th>
                     <th>comments</th>
-                    <th>lines</th>
+                    <th class="lines-column">lines</th>
                 </tr>
             </thead>
             <tbody>
@@ -142,33 +145,36 @@
             </tbody>
         </table>
         <h2>Unported files</h2>
-        <table class="table table-sm main-table">
+        <table class="table table-sm main-table unported-table" data-order="[[2, &quot;asc&quot;]]">
             <thead>
                 <tr>
                     <th>File</th>
                     <th>comments</th>
                     <th title="Number of files needed by this file">dependencies</th>
                     <th title="Number of files depending on this file">dependents</th>
-                    <th>lines</th>
+                    <th class="lines-column">lines</th>
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_data in unported.items() %}
+            {%- for f_import, f_data in unported.items()|sort(attribute='1.dep_counts_sort_key') %}
                 {%- set parts = f_data.dep_counts %}
-                <tr {%- if parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
+                <tr {%- if parts and parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>{{f_data.status.comments}}</td>
-                    {%- set IN_PROGRESS_EQUIV_UNPORTED = 5 %}
-                    <td data-sort="{{parts[0]*10000*IN_PROGRESS_EQUIV_UNPORTED+parts[1]*10000+parts[2]}}">
-                    {%- set plus = joiner(" + ") %}
-                    {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
-                    {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
-                    {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
+                    <td data-sort="{{f_data.dep_counts_sort_key}}">
+                    {%- if parts is not none %}
+                        {%- set plus = joiner(" + ") %}
+                        {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
+                        {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
+                        {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
+                    {%- else %}
+                        ?
+                    {%- endif %}
                     </td>
-                    <td>{{f_data.dependents|length}}</td>
+                    <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
             {%- endfor %}
