@@ -37,14 +37,28 @@
     </div>
     </nav>
     {% set count = (ported|length) + in_progress|length + (unported|length) %}
-    {% set p_ported = 100 *  (ported|length) / count %}
-    {% set p_in_progress = 100 * in_progress|length / count %}\
+    {% set p_ported = 100 * (ported|length) / count %}
+    {% set p_in_progress = 100 * in_progress|length / count %}
+
+    {% set l_ported = ported.values()|rejectattr(1, "none")|sum(attribute=1) %}
+    {% set l_in_progress = in_progress.values()|rejectattr(1, "none")|sum(attribute=1) %}
+    {% set l_unported = unported.values()|rejectattr(1, "none")|sum(attribute=1) %}
+    {% set l_count = l_ported + l_in_progress + l_unported %}
     <div class="container">
-        <div class="progress">
+        <div class="progress my-1">
             <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
-                style="width: {{p_ported}}%" aria-valuenow="{{ported|length}}" aria-valuemin="0" aria-valuemax="{{count}}"></div>
+                style="width: {{p_ported}}%" aria-valuenow="{{ported|length}}" aria-valuemin="0" aria-valuemax="{{count}}">{{ported|length}} files ported</div>
             <div class="progress-bar bg-warning" role="progressbar" aria-label="In progress"
+                title="{{in_progress|length}} files in progress"
                 style="width: {{p_in_progress}}%" aria-valuenow="{{in_progress|length}}" aria-valuemin="0" aria-valuemax="{{count}}"></div>
+        </div>
+        <div class="progress my-1">
+            <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
+                title=""
+                style="width: {{l_ported / l_count * 100}}%" aria-valuenow="{{l_ported}}" aria-valuemin="0" aria-valuemax="{{l_count}}">{{l_ported}} lines ported</div>
+            <div class="progress-bar bg-warning" role="progressbar" aria-label="In progress"
+                title="{{l_in_progress}} lines in progress"
+                style="width: {{l_in_progress / l_count * 100}}%" aria-valuenow="{{l_in_progress}}" aria-valuemin="0" aria-valuemax="{{l_count}}"></div>
         </div>
         <h2>In progress files</h2>
         <table class="table table-sm main-table">
@@ -53,10 +67,11 @@
                     <th>File</th>
                     <th>PR</th>
                     <th>comments</th>
+                    <th>lines</th>
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_status in in_progress.items() %}
+            {%- for f_import, (f_status, f_lines) in in_progress.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
@@ -66,7 +81,10 @@
                         <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_status.mathlib4_pr}}">#{{f_status.mathlib4_pr}}</a>
                     </td>
                     <td>
-                        {{f_status.comments}}
+                        {{f_status.comments if f_status.comments}}
+                    </td>
+                    <td>
+                        {{f_lines if f_lines}}
                     </td>
                 </tr>
             {% endfor %}
@@ -79,10 +97,11 @@
                     <th>File</th>
                     <th>commit</th>
                     <th>comments</th>
+                    <th>lines</th>
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_status in ported.items() %}
+            {%- for f_import, (f_status, f_lines) in ported.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
@@ -96,6 +115,9 @@
                     <td>
                         {{f_status.comments}}
                     </td>
+                    <td>
+                        {{f_lines if f_lines}}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -106,10 +128,11 @@
                 <tr>
                     <th>File</th>
                     <th>comments</th>
+                    <th>lines</th>
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_status in unported.items() %}
+            {%- for f_import, (f_status, f_lines) in unported.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
@@ -117,6 +140,9 @@
                     </td>
                     <td>
                         {{f_status.comments}}
+                    </td>
+                    <td>
+                        {{f_lines if f_lines}}
                     </td>
                 </tr>
             {% endfor %}
