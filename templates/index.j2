@@ -36,7 +36,16 @@
         </div>
     </div>
     </nav>
+    {% set count = (ported|length) + in_progress|length + (unported|length) %}
+    {% set p_ported = 100 *  (ported|length) / count %}
+    {% set p_in_progress = 100 * in_progress|length / count %}\
     <div class="container">
+        <div class="progress">
+            <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
+                style="width: {{p_ported}}%" aria-valuenow="{{ported|length}}" aria-valuemin="0" aria-valuemax="{{count}}"></div>
+            <div class="progress-bar bg-warning" role="progressbar" aria-label="In progress"
+                style="width: {{p_in_progress}}%" aria-valuenow="{{in_progress|length}}" aria-valuemin="0" aria-valuemax="{{count}}"></div>
+        </div>
         <h2>In progress files</h2>
         <table class="table table-sm main-table">
             <thead>
@@ -47,7 +56,7 @@
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_status in status.file_statuses.items() if not f_status.ported and f_status.mathlib4_pr %}
+            {%- for f_import, f_status in in_progress.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
@@ -73,7 +82,7 @@
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_status in status.file_statuses.items() if f_status.ported %}
+            {%- for f_import, f_status in ported.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
@@ -100,7 +109,7 @@
                 </tr>
             </thead>
             <tbody>
-            {%- for f_import, f_status in status.file_statuses.items() if not f_status.ported and not f_status.mathlib4_pr %}
+            {%- for f_import, f_status in unported.items() %}
                 <tr>
                     <td>
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">

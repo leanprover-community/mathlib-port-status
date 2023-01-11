@@ -14,4 +14,14 @@ t = template_env.get_template('index.j2')
 
 
 with (build_dir / 'index.html').open('w') as f:
-    f.write(t.render(status=status))
+    ported = {}
+    in_progress = {}
+    unported = {}
+    for f_import, f_status in status.file_statuses.items():
+        if f_status.ported:
+            ported[f_import] = f_status
+        elif f_status.mathlib4_pr:
+            in_progress[f_import] = f_status
+        else:
+            unported[f_import] = f_status
+    f.write(t.render(ported=ported, unported=unported, in_progress=in_progress))
