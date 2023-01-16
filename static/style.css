@@ -1,0 +1,19 @@
+/* Bootstrap 5.3 doesn't yet have native support for dark tables */
+
+[data-bs-theme="dark"] .table-success {
+    --bs-table-color: var(--bs-success-text);
+    --bs-table-bg: var(--bs-success-bg-subtle);
+    --bs-table-border-color: var(--bs-success-border-subtle);
+    --bs-table-striped-color: var(--bs-success-text);
+    --bs-table-active-color: var(--bs-success-text);
+    --bs-table-hover-color: var(--bs-success-text);
+}
+
+[data-bs-theme="dark"] .table-warning {
+    --bs-table-color: var(--bs-warning-text);
+    --bs-table-bg: var(--bs-warning-bg-subtle);
+    --bs-table-border-color: var(--bs-warning-border-subtle);
+    --bs-table-striped-color: var(--bs-warning-text);
+    --bs-table-active-color: var(--bs-warning-text);
+    --bs-table-hover-color: var(--bs-warning-text);
+}
