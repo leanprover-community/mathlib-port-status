@@ -1,0 +1,104 @@
+{% extends "layout.j2" %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="hljs-light.css">
+<link rel="stylesheet" href="hljs-dark.css">
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+{% endblock %}
+
+{% block body %}
+{% for warning in warnings %}
+<div class="alert alert-warning">{{ warning }}</div>
+{% endfor %}
+<h1>Ready to port</h1>
+<p>The following files have all dependencies ported already.
+Earlier items in the list are required in more places in mathlib.</p>
+<div class="table-responsive"><table class="table table-sm">
+    <tbody>
+    {%- for k, v in allDone.items() %}
+        <tr>
+            <td>
+                <a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                    <code>{{k}}</code></a>
+            </td>
+            <td>
+                {{ v[1]}}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table></div>
+<h1>Maybe ready to port</h1>
+<p>The following files have their immediate dependencies ported already, and may be ready to port:</p>
+<div class="table-responsive"><table class="table table-sm">
+    <tbody>
+    {%- for k, v in parentsDone.items() %}
+        <tr>
+            <td>
+                <a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                    <code>{{k}}</code></a>
+            </td>
+            <td>
+                {{ v[1] }}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table></div>
+<h1>Ported but unsynced</h1>
+<p>The following files are marked as ported, but do not have a SYNCHRONIZED WITH MATHLIB4 label.</p>
+<div class="table-responsive"><table class="table table-sm">
+    <tbody>
+    {%- for k, v in needsSync %}
+        <tr>
+            <td>
+                <a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                    <code>{{k}}</code></a>
+            </td>
+            <td>
+                {{ v[1] }}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table></div>
+<h1>Ported but unverified</h1>
+<p>The following files are marked as ported, but have not been verified against a commit hash from mathlib.</p>
+<div class="table-responsive"><table class="table table-sm">
+    <tbody>
+    {%- for k, v in unverified %}
+        <tr>
+            <td>
+                <a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                    <code>{{k}}</code></a>
+            </td>
+            <td>
+                {{ v[1] }}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table></div>
+<h1>Possibly out of sync</h1>
+<p>The following files have been modified since the commit at which they were verified.</p>
+<div class="table-responsive"><table class="table table-sm">
+    <tbody>
+    {%- for k, v in touched.items() %}
+        <tr>
+            <td>
+                <details>
+                    <summary><a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                    <code>{{k}}</code></a></summary>
+                
+                    <pre><code class="language-diff">{{ v }}</code><pre>
+                </details>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

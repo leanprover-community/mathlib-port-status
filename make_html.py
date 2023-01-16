@@ -11,6 +11,8 @@ import jinja2
 from mathlibtools.file_status import PortStatus, FileStatus
 import networkx as nx
 
+import make_old_html
+
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
 
@@ -87,7 +89,6 @@ build_dir.mkdir(parents=True, exist_ok=True)
 
 template_loader = jinja2.FileSystemLoader(searchpath="templates/")
 template_env = jinja2.Environment(loader=template_loader)
-t = template_env.get_template('index.j2')
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 
@@ -97,7 +98,7 @@ graph = parse_imports(mathlib_dir / 'src')
 
 shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 
-with (build_dir / 'html' / 'index.html').open('w') as index_f:
+def make_index(env, html_root):
     data = {}
     for f_import, f_status in status.file_statuses.items():
         path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
@@ -127,4 +128,9 @@ with (build_dir / 'html' / 'index.html').open('w') as index_f:
                 data[k] for k in nx.ancestors(graph, f_import) if k in data
             ]
         groups[f_data.state][f_import] = f_data
-    index_f.write(t.render(ported=ported, unported=unported, in_progress=in_progress))
+    with (build_dir / 'html' / 'index.html').open('w') as index_f:
+        index_f.write(
+            env.get_template('index.j2').render(ported=ported, unported=unported, in_progress=in_progress))
+
+make_index(template_env, build_dir / 'html')
+make_old_html.make_old(template_env, build_dir / 'html', mathlib_dir)
