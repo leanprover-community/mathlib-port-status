@@ -3,6 +3,7 @@ from enum import Enum
 import functools
 from pathlib import Path
 import re
+import shutil
 import sys
 from typing import Optional, List
 
@@ -93,6 +94,9 @@ mathlib_dir = build_dir / 'repos' / 'mathlib'
 graph = parse_imports(mathlib_dir / 'src')
 
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
+
+shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
+
 with (build_dir / 'html' / 'index.html').open('w') as index_f:
     data = {}
     for f_import, f_status in status.file_statuses.items():

@@ -1,69 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mathlib porting status</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
-    {# <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script> #}
-    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
-    <link href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
-    <script type="text/javascript">
+{% extends "layout.j2" %}
 
-    function getTheme() {
-        return localStorage.getItem("theme") || "system";
-    }
+{% block nav %}
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+<input class="form-control me-2" type="search" incremental placeholder="Search" aria-label="Search" id="search-input">
+</div>
+{% endblock %}
 
-    function setTheme(themeName) {
-        localStorage.setItem('theme', themeName);
-        if (themeName == "system") {
-            themeName = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        }
-        document.documentElement.setAttribute('data-bs-theme', themeName);
-    }
-
-    setTheme(getTheme())
-
-    $(document).ready(function () {
-        let tables = $('.main-table').DataTable({
-            // the default, but no search
-            dom: "<'row'<'col-sm-12 col-md-6'l>>" +
-                "<'row'<'col-sm-12'tr>>" +
-                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-            columnDefs: [
-                { targets: 'lines-column', width: '4em'},
-            ]
-        });
-
-        $('#search-input').on('search', function(e) {
-            tables.search(this.value).draw();
-        });
-
-        // also check to see if the user changes their theme settings while the page is loaded.
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-            setTheme(getTheme());
-        })
-
-        window.addEventListener('storage', (event) => setTheme(getTheme()));
-    });
-    </script>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary sticky-top">
-    <div class="container">
-        <a class="navbar-brand" href="#">Mathlib porting status</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <input class="form-control me-2" type="search" incremental placeholder="Search" aria-label="Search" id="search-input">
-        </div>
-    </div>
-    </nav>
+{% block body %}
     {%- set count = (ported|length) + in_progress|length + (unported|length) %}
     {%- set p_ported = 100 * (ported|length) / count %}
     {%- set p_in_progress = 100 * in_progress|length / count %}
@@ -180,6 +123,4 @@
             {%- endfor %}
             </tbody>
         </table>
-    </div>
-</body>
-</html>
+{% endblock %}
