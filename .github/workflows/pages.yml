@@ -37,6 +37,7 @@ jobs:
         with:
           repository: leanprover-community/mathlib
           path: build/repos/mathlib
+          fetch-depth: 0  # TODO: only unshallow `master`
       - name: Checkout mathlib4
         uses: actions/checkout@v3
         with:
