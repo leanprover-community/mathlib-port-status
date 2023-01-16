@@ -35,7 +35,7 @@
                 style="width: {{l_in_progress / l_count * 100}}%" aria-valuenow="{{l_in_progress}}" aria-valuemin="0" aria-valuemax="{{l_count}}"></div>
         </div>
         <h2>In progress files</h2>
-        <table class="table table-sm main-table in-progress-table">
+        <table class="table table-sm main-table in-progress-table" data-order="[[3, &quot;desc&quot;]]">
             <thead>
                 <tr>
                     <th>File</th>
@@ -63,13 +63,13 @@
             </tbody>
         </table>
         <h2>Unported files</h2>
-        <table class="table table-sm main-table unported-table" data-order="[[2, &quot;asc&quot;]]">
+        <table class="table table-sm main-table unported-table" data-order="[[2, &quot;asc&quot;], [3, &quot;desc&quot;]]">
             <thead>
                 <tr>
                     <th>File</th>
                     <th>comments</th>
                     <th title="Number of files needed by this file">dependencies</th>
-                    <th title="Number of files depending on this file">dependents</th>
+                    <th title="Number of files depending on this file.&#10;Note that sorting ignores the number of already ported files.">dependents</th>
                     <th class="lines-column">lines</th>
                 </tr>
             </thead>

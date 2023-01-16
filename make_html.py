@@ -80,7 +80,7 @@ class Mathlib3FileData:
         if self.dep_counts is None:
             return sys.maxsize
         u, i, p = self.dep_counts
-        return u*10000*IN_PROGRESS_EQUIV_UNPORTED+i*10000+p
+        return u*10000*IN_PROGRESS_EQUIV_UNPORTED+i*10000
 
 status = PortStatus.deserialize_old()
 
