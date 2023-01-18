@@ -6,6 +6,7 @@ import re
 import shutil
 import sys
 from typing import Optional, List
+import os
 
 import jinja2
 from mathlibtools.file_status import PortStatus, FileStatus
@@ -92,6 +93,7 @@ build_dir.mkdir(parents=True, exist_ok=True)
 template_loader = jinja2.FileSystemLoader(searchpath="templates/")
 template_env = jinja2.Environment(loader=template_loader)
 template_env.filters['htmlify_comment'] = htmlify_comment
+template_env.globals['site_url'] = os.environ.get('SITE_URL', '/')
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 

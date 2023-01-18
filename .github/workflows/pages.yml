@@ -44,6 +44,7 @@ jobs:
           repository: leanprover-community/mathlib4
           path: build/repos/mathlib4
       - name: Setup Pages
+        id: setup-pages
         uses: actions/configure-pages@v2
       - name: Setup Python
         uses: actions/setup-python@v4.4.0
@@ -56,6 +57,7 @@ jobs:
 
       - name: Generate HTML
         run: |
+          export SITE_URL="${{steps.setup-pages.outputs.base_url}}"
           python make_html.py
           
       - name: Upload artifact
