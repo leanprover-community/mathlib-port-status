@@ -70,7 +70,10 @@ def make_old(env: jinja2.Environment, html_root: Path, mathlib_dir: Path):
     for node in graph.nodes:
         if data[node].mathlib3_hash:
             verified[node] = data[node].mathlib3_hash
-            git_command = ['git', 'diff', '--exit-code',
+            git_command = ['git',
+                # disable abbreviations so that the full sha is in the output
+                '-c', 'core.abbrev=no',
+                'diff', '--exit-code',
                 f'--ignore-matching-lines={comment_git_re}',
                 data[node].mathlib3_hash + "..HEAD", "--", "src" + os.sep + node.replace('.', os.sep) + ".lean"]
             result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
