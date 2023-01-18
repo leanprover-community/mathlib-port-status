@@ -24,7 +24,7 @@ Earlier items in the list are required in more places in mathlib.</p>
                     <code>{{k}}</code></a>
             </td>
             <td>
-                {{ v[1]}}
+                {{ v[1] | htmlify_comment }}
             </td>
         </tr>
     {% endfor %}
@@ -41,7 +41,7 @@ Earlier items in the list are required in more places in mathlib.</p>
                     <code>{{k}}</code></a>
             </td>
             <td>
-                {{ v[1] }}
+                {{ v[1] | htmlify_comment }}
             </td>
         </tr>
     {% endfor %}
@@ -58,7 +58,7 @@ Earlier items in the list are required in more places in mathlib.</p>
                     <code>{{k}}</code></a>
             </td>
             <td>
-                {{ v[1] }}
+                {{ v.comments | htmlify_comment }}
             </td>
         </tr>
     {% endfor %}
@@ -75,7 +75,7 @@ Earlier items in the list are required in more places in mathlib.</p>
                     <code>{{k}}</code></a>
             </td>
             <td>
-                {{ v[1] }}
+                {{ v[1] | htmlify_comment }}
             </td>
         </tr>
     {% endfor %}

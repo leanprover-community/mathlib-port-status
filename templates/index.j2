@@ -55,7 +55,7 @@
                     <td>
                         <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_data.status.mathlib4_pr}}">#{{f_data.status.mathlib4_pr}}</a>
                     </td>
-                    <td>{{f_data.status.comments if f_data.status.comments}}</td>
+                    <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}</td>
                     <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
@@ -81,7 +81,7 @@
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
-                    <td>{{f_data.status.comments}}</td>
+                    <td>{{f_data.status.comments | htmlify_comment}}</td>
                     <td data-sort="{{f_data.dep_counts_sort_key}}">
                     {%- if parts is not none %}
                         {%- set plus = joiner(" + ") %}
@@ -120,7 +120,7 @@
                             <a href="https://github.com/leanprover-community/mathlib/commits/{{f_data.status.mathlib3_hash}}">{{f_data.status.mathlib3_hash[:8]}}</a>
                         {%- endif %}
                     </td>
-                    <td>{{f_data.status.comments}}</td>
+                    <td>{{f_data.status.comments | htmlify_comment}}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
             {%- endfor %}

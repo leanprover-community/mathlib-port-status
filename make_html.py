@@ -13,6 +13,8 @@ import networkx as nx
 
 import make_old_html
 
+from htmlify_comment import htmlify_comment
+
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
 
@@ -89,6 +91,7 @@ build_dir.mkdir(parents=True, exist_ok=True)
 
 template_loader = jinja2.FileSystemLoader(searchpath="templates/")
 template_env = jinja2.Environment(loader=template_loader)
+template_env.filters['htmlify_comment'] = htmlify_comment
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 
