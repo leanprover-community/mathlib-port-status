@@ -21,7 +21,7 @@
     <div class="container">
         <div class="progress my-1">
             <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
-                style="width: {{p_ported}}%" aria-valuenow="{{ported|length}}" aria-valuemin="0" aria-valuemax="{{count}}">{{ported|length}} files ported</div>
+                style="width: {{p_ported}}%" aria-valuenow="{{ported|length}}" aria-valuemin="0" aria-valuemax="{{count}}">{{ported|length}} files ported ({{p_ported}}%)</div>
             <div class="progress-bar bg-warning" role="progressbar" aria-label="In progress"
                 title="{{in_progress|length}} files in progress"
                 style="width: {{p_in_progress}}%" aria-valuenow="{{in_progress|length}}" aria-valuemin="0" aria-valuemax="{{count}}"></div>
@@ -29,7 +29,7 @@
         <div class="progress my-1">
             <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
                 title=""
-                style="width: {{l_ported / l_count * 100}}%" aria-valuenow="{{l_ported}}" aria-valuemin="0" aria-valuemax="{{l_count}}">{{l_ported}} lines ported</div>
+                style="width: {{l_ported / l_count * 100}}%" aria-valuenow="{{l_ported}}" aria-valuemin="0" aria-valuemax="{{l_count}}">{{l_ported}} lines ported ({{l_ported / l_count * 100}}%)</div>
             <div class="progress-bar bg-warning" role="progressbar" aria-label="In progress"
                 title="{{l_in_progress}} lines in progress"
                 style="width: {{l_in_progress / l_count * 100}}%" aria-valuenow="{{l_in_progress}}" aria-valuemin="0" aria-valuemax="{{l_count}}"></div>
