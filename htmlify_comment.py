@@ -19,7 +19,7 @@ def htmlify_comment(s: Optional[str]) -> Markup:
                 'lean4': 'leanprover/lean4',
                 'lean': 'leanprover-community/lean',
             }.get(repo, repo)
-            return Markup(f'<a href="https://github.com/{m.group(1)}/pull/{m.group(2)}">{m.group(0)}</a>')
+            return Markup(f'<a href="https://github.com/{repo}/pull/{pull}">{m.group(0)}</a>')
         elif m.group(3) is not None:
             return Markup(f'<a href="https://github.com/leanprover-community/mathlib/commit/{m.group(3)}">{m.group(0)[:8]}</a>')
         elif m.group(4) is not None:
