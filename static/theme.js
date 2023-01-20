@@ -25,7 +25,7 @@ $(document).ready(function () {
     });
 
     let params = new URLSearchParams(location.search);
-    let initial_search = params.get('q');
+    let initial_search = params.get('q') || '';
     $('#search-input')[0].value = initial_search;
     tables.search(initial_search).draw();
 
