@@ -119,5 +119,5 @@ def make_old(env: jinja2.Environment, html_root: Path, mathlib_dir: Path):
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
             touched=touched, verified=verified,
-            head_sha=repo.head.object.hexsha
+            head_sha=mathlib_repo.head.object.hexsha
         ))
