@@ -16,6 +16,7 @@ def htmlify_comment(s: Optional[str]) -> Markup:
                 'mathlib4': 'leanprover-community/mathlib4',
                 'mathlib': 'leanprover-community/mathlib',
                 'mathlib3': 'leanprover-community/mathlib',
+                '': 'leanprover-community/mathlib',
                 'lean4': 'leanprover/lean4',
                 'lean': 'leanprover-community/lean',
             }.get(repo, repo)
@@ -24,8 +25,10 @@ def htmlify_comment(s: Optional[str]) -> Markup:
             return Markup(f'<a href="https://github.com/leanprover-community/mathlib/commit/{m.group(3)}">{m.group(0)[:8]}</a>')
         elif m.group(4) is not None:
             return Markup(f'<a href="https://github.com/{m.group(4)}">{m.group(0)}</a>')
+        elif m.group(5) is not None:
+            return Markup('<code>{}</code>').format(m.group(5))
         else:
             return Markup.escape(m.group(0))
     return Markup(re.sub(
-        r'(?:([-_a-zA-Z0-9/]+)#([0-9]+))|([0-9a-f]{40})|@([-a-z0-9A-Z_]+)|.*?',
+        r'(?:([-_a-zA-Z0-9/]*)#([0-9]+))|([0-9a-f]{40})|@([-a-z0-9A-Z_]+)|`([^`]+)`|.*?',
         repl_func, s))

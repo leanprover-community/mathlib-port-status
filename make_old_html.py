@@ -9,6 +9,7 @@ from sys import argv
 from pathlib import Path
 import jinja2
 import shlex
+import git
 
 import_re = re.compile(r"^import ([^ ]*)")
 synchronized_re = re.compile(r".*SYNCHRONIZED WITH MATHLIB4.*")
@@ -24,6 +25,8 @@ comment_git_re = r'\`(' + r'|'.join([
 ]) + r")" + "\n"
 
 def make_old(env: jinja2.Environment, html_root: Path, mathlib_dir: Path):
+    mathlib_repo = git.Repo(mathlib_dir)
+
     def mk_label(path: Path) -> str:
         rel = path.relative_to((mathlib_dir / 'src'))
         return str(rel.with_suffix('')).replace(os.sep, '.')
@@ -70,15 +73,20 @@ def make_old(env: jinja2.Environment, html_root: Path, mathlib_dir: Path):
     for node in graph.nodes:
         if data[node].mathlib3_hash:
             verified[node] = data[node].mathlib3_hash
+            fname = "src" + os.sep + node.replace('.', os.sep) + ".lean"
             git_command = ['git',
                 # disable abbreviations so that the full sha is in the output
                 '-c', 'core.abbrev=no',
                 'diff', '--exit-code',
                 f'--ignore-matching-lines={comment_git_re}',
-                data[node].mathlib3_hash + "..HEAD", "--", "src" + os.sep + node.replace('.', os.sep) + ".lean"]
+                data[node].mathlib3_hash + "..HEAD", "--", fname]
             result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
             if result.returncode == 1:
-                touched[node] = result.stdout
+                commits = [
+                    c for c in mathlib_repo.iter_commits(f'{data[node].mathlib3_hash}..HEAD', fname)
+                    if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
+                ]
+                touched[node] = (result.stdout, commits)
         elif data[node].ported:
             warnings.append("Bad status for " + node + "\n." +
                 "Expected 'Yes MATHLIB4-PR MATHLIB-HASH'")
@@ -105,6 +113,9 @@ def make_old(env: jinja2.Environment, html_root: Path, mathlib_dir: Path):
     with (html_root / 'old.html').open('w') as index_f:
         index_f.write(env.get_template('old.j2').render(
             warnings=warnings,
-            allDone=allDone, parentsDone=parentsDone, needsSync=needsSync, unverified=unverified,
-            touched=touched
+            allDone=allDone, parentsDone=parentsDone, needsSync=needsSync, unverified=unverified
+        ))
+    with (html_root / 'out-of-sync.html').open('w') as index_f:
+        index_f.write(env.get_template('out-of-sync.j2').render(
+            touched=touched, verified=verified
         ))

@@ -33,7 +33,10 @@ $(document).ready(function () {
         tables.search(this.value).draw();
         const params = new URLSearchParams(location.search);
         params.set('q', this.value);
-        window.history.replaceState({}, '', `${location.pathname}?${params.toString()}#${location.hash}`);
+        window.history.replaceState({}, '',
+            location.hash ? `${location.pathname}?${params.toString()}#${location.hash}`
+                          : `${location.pathname}?${params.toString()}`);
+        e.preventDefault();
     });
 
     // also check to see if the user changes their theme settings while the page is loaded.

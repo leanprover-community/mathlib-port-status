@@ -2,10 +2,18 @@
 
 {% block nav %}
 {{ super() }}
-<div class="collapse navbar-collapse" id="navbarSupportedContent">
-
-  <a class="nav-link" href="old.html">alternate&nbsp;view</a>
-<input class="form-control me-2" type="search" incremental placeholder="Search" aria-label="Search" id="search-input">
+<div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" href="old.html">alternate view</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="out-of-sync.html">out of sync</a>
+        </li>
+    </ul>
+    <form class="d-flex" role="search">
+        <input class="form-control me-2" name="q" type="search" incremental placeholder="Search" aria-label="Search" id="search-input" />
+    </form>
 </div>
 {% endblock %}
 
@@ -121,7 +129,7 @@
                     </td>
                     <td>
                         {%- if f_data.status.mathlib3_hash %}
-                            <a href="https://github.com/leanprover-community/mathlib/commits/{{f_data.status.mathlib3_hash}}">{{f_data.status.mathlib3_hash[:8]}}</a>
+                            {{f_data.status.mathlib3_hash | link_sha}}
                         {%- endif %}
                     </td>
                     <td>{{f_data.status.comments | htmlify_comment}}</td>

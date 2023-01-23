@@ -1,0 +1,55 @@
+{% extends "layout.j2" %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="hljs-light.css">
+<link rel="stylesheet" href="hljs-dark.css">
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+{% endblock %}
+
+{% block nav %}
+{{ super() }}
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" href="old.html">alternate view</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="out-of-sync.html">out of sync</a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block body %}
+{% for warning in warnings %}
+<div class="alert alert-warning">{{ warning }}</div>
+{% endfor %}
+<h1>Possibly out of sync</h1>
+<p>The following files have been modified since the commit at which they were verified.</p>
+<div class="table-responsive"><table class="table table-sm">
+    <tbody>
+    {%- for k, (v, commits) in touched.items() %}
+        <tr>
+            <td>
+                <details>
+                    <summary><a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                    <code>{{k}}</code></a> (verified at {{verified[k] | link_sha }})</summary>
+                    <p>Changes (newest first)</p>
+                    <ul>
+                        {%- for c in commits %}
+                            <li>{{c.hexsha | link_sha}}: {{c.summary | htmlify_comment}}</li>
+                        {%- endfor %}
+                    </ul>
+                
+                    <pre><code class="language-diff">{{ '\n'.join((v.splitlines()[4:])) }}</code><pre>
+                </details>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

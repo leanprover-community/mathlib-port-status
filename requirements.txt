@@ -1,3 +1,4 @@
 jinja2
 mathlibtools
 networkx
+gitpython

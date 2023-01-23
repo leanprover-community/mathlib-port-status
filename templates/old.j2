@@ -1,11 +1,17 @@
 {% extends "layout.j2" %}
 
-{% block head %}
+{% block nav %}
 {{ super() }}
-<link rel="stylesheet" href="hljs-light.css">
-<link rel="stylesheet" href="hljs-dark.css">
-<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link active" href="old.html">alternate view</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="out-of-sync.html">out of sync</a>
+        </li>
+    </ul>
+</div>
 {% endblock %}
 
 {% block body %}
@@ -81,24 +87,6 @@ Earlier items in the list are required in more places in mathlib.</p>
     {% endfor %}
     </tbody>
 </table></div>
-<h1>Possibly out of sync</h1>
-<p>The following files have been modified since the commit at which they were verified.</p>
-<div class="table-responsive"><table class="table table-sm">
-    <tbody>
-    {%- for k, v in touched.items() %}
-        <tr>
-            <td>
-                <details>
-                    <summary><a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
-                    <code>{{k}}</code></a></summary>
-                
-                    <pre><code class="language-diff">{{ v }}</code><pre>
-                </details>
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
 </div>
 
 {% endblock %}
