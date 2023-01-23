@@ -27,7 +27,7 @@
 <div class="alert alert-warning">{{ warning }}</div>
 {% endfor %}
 <h1>Possibly out of sync</h1>
-<p>The following files have been modified since the commit at which they were verified.</p>
+<p>The following files at {{head_sha | link_sha}} have been modified since the commit at which they were verified.</p>
 <div class="table-responsive"><table class="table table-sm">
     <tbody>
     {%- for k, (v, commits) in touched.items() %}

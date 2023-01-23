@@ -85,6 +85,7 @@ def make_old(env: jinja2.Environment, html_root: Path, mathlib_dir: Path):
                 commits = [
                     c for c in mathlib_repo.iter_commits(f'{data[node].mathlib3_hash}..HEAD', fname)
                     if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
+                        and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
                 ]
                 touched[node] = (result.stdout, commits)
         elif data[node].ported:
@@ -117,5 +118,6 @@ def make_old(env: jinja2.Environment, html_root: Path, mathlib_dir: Path):
         ))
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
-            touched=touched, verified=verified
+            touched=touched, verified=verified,
+            head_sha=repo.head.object.hexsha
         ))
