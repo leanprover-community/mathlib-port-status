@@ -63,7 +63,11 @@
                     <td>
                         <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_data.status.mathlib4_pr}}">#{{f_data.status.mathlib4_pr}}</a>
                     </td>
-                    <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}</td>
+                    <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}
+                    {%- for label in f_data.labels %}
+                    <div style="background-color:#{{label.color}};display: inline">{{label.name}}</div>
+                    {%- endfor %}
+                    </td>
                     <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
