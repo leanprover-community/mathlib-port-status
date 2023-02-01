@@ -20,8 +20,7 @@ import make_old_html
 from htmlify_comment import htmlify_comment
 
 
-github_token = open(os.environ["GITHUB_TOKEN_FILE"]).read().strip(
-) if "GITHUB_TOKEN_FILE" in os.environ else None
+github_token = os.environ.get("GITHUB_TOKEN")
 mathlib4repo = github.Github(github_token).get_repo("leanprover-community/mathlib4")
 
 @functools.cache
