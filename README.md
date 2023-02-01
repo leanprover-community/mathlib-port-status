@@ -1,5 +1,5 @@
 # mathlib-port-status
-Tools for managing the status of the port
+Tools for managing the [status of the port](https://leanprover-community.github.io/mathlib-port-status/)
 
 ## Architecture
 
@@ -22,9 +22,9 @@ graph LR;
     mathlibtools-->mathlib3-ci;
     mathlibtools-->mathlib3-comments;
     mathlib3-->run_port_status;
-    
+
     mathlib3 <-----> mathlib3-comments;
-    
+
     mathlibtools-->mathlib-port-status-ci;
     mathlib3-->mathlib-port-status-ci;
     mathlib4-->mathlib-port-status-ci;
