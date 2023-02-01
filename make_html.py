@@ -2,10 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 import github
 import functools
-import logging
 from pathlib import Path
 import re
-import requests
 import shutil
 import sys
 from typing import Optional, List
@@ -21,13 +19,9 @@ import make_old_html
 
 from htmlify_comment import htmlify_comment
 
-if not os.path.exists('build/repos/mathlib'):
-    print("Make sure you are in the root of the mathlib-port-status directory")
-    print("and have checked out mathlib under build/repos/mathlib.")
-    sys.exit(1)
 
-GITHUB_TOKEN_FILE = 'build/repos/github-token'
-github_token = open(GITHUB_TOKEN_FILE).read().strip()
+github_token = open(os.environ["GITHUB_TOKEN_FILE"]).read().strip(
+) if "GITHUB_TOKEN_FILE" in os.environ else None
 mathlib4repo = github.Github(github_token).get_repo("leanprover-community/mathlib4")
 
 @functools.cache
