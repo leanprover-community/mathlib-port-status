@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from enum import Enum
-import github
 import functools
 from pathlib import Path
 import re
@@ -10,6 +9,7 @@ from typing import Optional, List
 import os
 
 
+import github
 import jinja2
 from mathlibtools.file_status import PortStatus, FileStatus
 import networkx as nx
