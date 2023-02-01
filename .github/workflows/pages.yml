@@ -57,7 +57,7 @@ jobs:
 
       - name: Generate HTML
         run: |
-          export SITE_URL="${{steps.setup-pages.outputs.base_url
+          export SITE_URL="${{steps.setup-pages.outputs.base_url}}"
           export GITHUB_TOKEN="${{secrets.MATHLIB4_GITHUB_TOKEN}}"
           python make_html.py
           
