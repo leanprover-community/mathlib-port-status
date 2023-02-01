@@ -1,5 +1,5 @@
 # mathlib-port-status
-Tools for managing the [status of the port](https://leanprover-community.github.io/mathlib-port-status/)
+Tools for managing the status of the port, notably [the web dashboard](https://leanprover-community.github.io/mathlib-port-status/).
 
 ## Architecture
 
