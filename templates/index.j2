@@ -68,7 +68,10 @@
                     <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}</td>
                     <td>
                     {%- for label in f_data.labels %}
-                        <span class="badge rounded-pill" style="background-color:#{{label.color}};color:{{label.text_color}}">{{label.name}}</span>
+                        <a href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'>
+                            <span class="badge rounded-pill" style="background-color:#{{label.color}};color:{{label.text_color}}">
+                            {{label.name}}</span>
+                        </a>
                     {%- endfor %}
                     </td>
                     <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
