@@ -49,6 +49,7 @@
                     <th>File</th>
                     <th>PR</th>
                     <th>comments</th>
+                    <th>labels</th>
                     <th title="Number of files depending on this file">dependents</th>
                     <th class="lines-column">lines</th>
                 </tr>
@@ -63,9 +64,10 @@
                     <td>
                         <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_data.status.mathlib4_pr}}">#{{f_data.status.mathlib4_pr}}</a>
                     </td>
-                    <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}
+                    <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}</td>
+                    <td>
                     {%- for label in f_data.labels %}
-                    <span class="badge rounded-pill" style="background-color:#{{label.color}}">{{label.name}}</span>
+                        <span class="badge rounded-pill" style="background-color:#{{label.color}}">{{label.name}}</span>
                     {%- endfor %}
                     </td>
                     <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
