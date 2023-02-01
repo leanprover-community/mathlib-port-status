@@ -13,14 +13,20 @@ graph LR;
     mathlibtools[[mathlibtools]]
     mathlib-port-status-ci[mathlib-port-status CI<br />On github actions]
     mathlib-port-status[/"<a href='https://leanprover-community.github.io/mathlib-port-status/'>mathlib-port-status</a>"/]
-    mathlib3-ci[mathlib3 CI checks]
-    mathlib3-->run_port_status;
+    mathlib3-ci[mathlib3 CI warnings];
+    mathlib3-comments[mathlib3 CI to add port comments];
     mathlib4-->run_port_status;
     port-comments-->run_port_status;
     run_port_status-->port-wiki;
     port-wiki-->mathlibtools;
     mathlibtools-->mathlib3-ci;
+    mathlibtools-->mathlib3-comments;
+    mathlib3-->run_port_status;
+    
+    mathlib3 <-----> mathlib3-comments;
+    
     mathlibtools-->mathlib-port-status-ci;
+    mathlib3-->mathlib-port-status-ci;
     mathlib4-->mathlib-port-status-ci;
     mathlib-port-status-ci-->mathlib-port-status;
 ```
