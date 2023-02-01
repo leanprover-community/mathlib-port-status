@@ -68,7 +68,7 @@
                     <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}</td>
                     <td>
                     {%- for label in f_data.labels %}
-                        <span class="badge rounded-pill" style="background-color:#{{label.color}}">{{label.name}}</span>
+                        <span class="badge rounded-pill" style="background-color:#{{label.color}};color:{{label.text_color}}">{{label.name}}</span>
                     {%- endfor %}
                     </td>
                     <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>

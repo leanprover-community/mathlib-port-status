@@ -22,11 +22,24 @@ from htmlify_comment import htmlify_comment
 github_token = os.environ.get("GITHUB_TOKEN")
 mathlib4repo = github.Github(github_token).get_repo("leanprover-community/mathlib4")
 
+
 @functools.cache
 def github_labels(pr):
     pull_request = mathlib4repo.get_pull(pr)
-    labels = [{'name': label.name, 'color': label.color} for label in pull_request.get_labels()]
+
+    def text_color_of_color(color):
+        r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
+        perceived_lightness = (
+            (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
+        lightness_threshold = 0.453
+        return 'black' if perceived_lightness > lightness_threshold else 'white'
+
+    labels = [{'name': label.name,
+               'color': label.color,
+               'text_color': text_color_of_color(label.color)}
+              for label in pull_request.get_labels()]
     return labels
+
 
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
