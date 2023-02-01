@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
+import github
 import functools
 import logging
 from pathlib import Path
@@ -20,15 +21,19 @@ import make_old_html
 
 from htmlify_comment import htmlify_comment
 
+if not os.path.exists('build/repos/mathlib'):
+    print("Make sure you are in the root of the mathlib-port-status directory")
+    print("and have checked out mathlib under build/repos/mathlib.")
+    sys.exit(1)
+
+GITHUB_TOKEN_FILE = 'build/repos/github-token'
+github_token = open(GITHUB_TOKEN_FILE).read().strip()
+mathlib4repo = github.Github(github_token).get_repo("leanprover-community/mathlib4")
+
 @functools.cache
 def github_labels(pr):
-    url = f'https://api.github.com/repos/leanprover-community/mathlib4/pulls/{pr}'
-    response = requests.get(url)
-    json_response = response.json()
-    if 'labels' not in json_response:
-        logging.error(f'curl of github failed for {pr=}, API rate limit exceeded?')
-        return []
-    labels = [{'name': label['name'], 'color': label['color']} for label in json_response['labels']]
+    pull_request = mathlib4repo.get_pull(pr)
+    labels = [{'name': label.name, 'color': label.color} for label in pull_request.get_labels()]
     return labels
 
 def parse_imports(root_path):
