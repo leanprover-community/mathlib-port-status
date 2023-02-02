@@ -7,6 +7,7 @@ import shutil
 import sys
 from typing import Optional, List
 import os
+import warnings
 
 import github
 import jinja2
@@ -20,13 +21,23 @@ from htmlify_comment import htmlify_comment
 
 
 github_token = os.environ.get("GITHUB_TOKEN")
-mathlib4repo = github.Github(github_token).get_repo("leanprover-community/mathlib4")
+
+
+@functools.cache
+def mathlib4repo():
+    return github.Github(github_token).get_repo("leanprover-community/mathlib4")
 
 
 @functools.cache
 def github_labels(pr):
-    pull_request = mathlib4repo.get_pull(pr)
-
+    try:
+        pull_request = mathlib4repo().get_pull(pr)
+    except github.RateLimitExceededException:
+        if 'GITPOD_HOST' in os.environ:
+            warnings.warn(
+                'Unable to fetch PR labels; set `GITHUB_TOKEN` to increase the rate limit')
+            return []
+        raise
     def text_color_of_color(color):
         r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
         perceived_lightness = (
