@@ -4,12 +4,14 @@ import functools
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import sys
 from typing import Optional, List, Dict
 import os
 import warnings
 
 import dacite
+import git
 import github
 import jinja2
 import networkx as nx
@@ -185,5 +187,46 @@ def make_index(env, html_root):
         index_f.write(
             env.get_template('index.j2').render(ported=ported, unported=unported, in_progress=in_progress))
 
+def make_out_of_sync(env, html_root, mathlib_dir):
+    # Not using re.compile as this is passed to git which uses a different regex dialect:
+    # https://www.sjoerdlangkemper.nl/2021/08/13/how-does-git-diff-ignore-matching-lines-work/
+    comment_git_re = r'\`(' + r'|'.join([
+        re.escape("> THIS FILE IS SYNCHRONIZED WITH MATHLIB4."),
+        re.escape("> https://github.com/leanprover-community/mathlib4/pull/") + r"[0-9]*",
+        re.escape("> Any changes to this file require a corresponding PR to mathlib4."),
+        r"",
+    ]) + r")" + "\n"
+
+    mathlib_repo = git.Repo(mathlib_dir)
+
+    touched = {}
+    verified = {}
+    for f_import, f_status in port_status.items():
+        if not f_status.mathlib3_hash:
+            continue
+        verified[f_import] = f_status.mathlib3_hash
+        fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
+        git_command = ['git',
+            # disable abbreviations so that the full (blob not commit!) sha is in the output
+            '-c', 'core.abbrev=no',
+            'diff', '--exit-code',
+            f'--ignore-matching-lines={comment_git_re}',
+            f_status.mathlib3_hash + "..HEAD", "--", fname]
+        result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
+        if result.returncode == 1:
+            commits = [
+                c for c in mathlib_repo.iter_commits(f'{f_status.mathlib3_hash}..HEAD', fname)
+                if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
+                    and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
+            ]
+            touched[f_import] = (result.stdout, commits)
+
+    with (html_root / 'out-of-sync.html').open('w') as index_f:
+        index_f.write(env.get_template('out-of-sync.j2').render(
+            touched=touched, verified=verified,
+            head_sha=mathlib_repo.head.object.hexsha
+        ))
+
 make_index(template_env, build_dir / 'html')
+make_out_of_sync(template_env, build_dir / 'html', mathlib_dir)
 make_old_html.make_old(template_env, build_dir / 'html', mathlib_dir)
