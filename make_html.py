@@ -5,18 +5,20 @@ from pathlib import Path
 import re
 import shutil
 import sys
-from typing import Optional, List
+from typing import Optional, List, Dict
 import os
 import warnings
 
+import dacite
 import github
 import jinja2
-from mathlibtools.file_status import PortStatus, FileStatus
 import networkx as nx
 from markupsafe import Markup
+import requests
+import yaml
 
 import make_old_html
-
+import port_status_yaml
 from htmlify_comment import htmlify_comment
 
 
@@ -90,7 +92,7 @@ class PortState(Enum):
 
 @dataclass
 class Mathlib3FileData:
-    status: FileStatus
+    status: port_status_yaml.PortStatusEntry
     lines: Optional[int]
     labels: Optional[List[dict[str, str]]]
     dependents: Optional[List['Mathlib3FileData']] = None
@@ -100,7 +102,8 @@ class Mathlib3FileData:
     def state(self):
         if self.status.ported:
             return PortState.PORTED
-        elif self.status.mathlib4_pr:
+        elif self.status.mathlib4_pr and self.status.mathlib3_hash:
+            # PR is meaningless without the hash, as it might be an ad-hoc port
             return PortState.IN_PROGRESS
         else:
             return PortState.UNPORTED
@@ -126,7 +129,7 @@ def link_sha(sha: str) -> Markup:
         '<a href="https://github.com/leanprover-community/mathlib/commits/{sha}">{short_sha}</a>'
     ).format(sha=sha, short_sha=sha[:8])
 
-status = PortStatus.deserialize_old()
+port_status = port_status_yaml.load()
 
 build_dir = Path('build')
 build_dir.mkdir(parents=True, exist_ok=True)
@@ -147,7 +150,7 @@ shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 
 def make_index(env, html_root):
     data = {}
-    for f_import, f_status in status.file_statuses.items():
+    for f_import, f_status in port_status.items():
         path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
         try:
             with path.open('r') as f_src:

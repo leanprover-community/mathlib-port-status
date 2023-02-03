@@ -65,7 +65,7 @@
                     <td>
                         <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_data.status.mathlib4_pr}}">#{{f_data.status.mathlib4_pr}}</a>
                     </td>
-                    <td>{{f_data.status.comments | htmlify_comment if f_data.status.comments}}</td>
+                    <td>{{f_data.status.comment.message | htmlify_comment }}</td>
                     <td>
                     {%- for label in f_data.labels %}
                         <a href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'>
@@ -103,7 +103,7 @@
                         <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
-                    <td>{{f_data.status.comments | htmlify_comment}}</td>
+                    <td>{{f_data.status.comment.message | htmlify_comment}}</td>
                     <td data-sort="{{f_data.dep_counts_sort_key}}">
                     {%- if parts is not none %}
                         {%- set plus = joiner(" + ") %}
@@ -142,7 +142,7 @@
                             {{f_data.status.mathlib3_hash | link_sha}}
                         {%- endif %}
                     </td>
-                    <td>{{f_data.status.comments | htmlify_comment}}</td>
+                    <td>{{f_data.status.comment.message | htmlify_comment}}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
             {%- endfor %}
