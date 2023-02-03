@@ -32,22 +32,18 @@
 <script>
 $(document).ready(function () {
     let elem = $('.sync-table');
-    let data = [];
+    let last_row_id = undefined;
+    let child_elems = new Map();
     elem.find('tbody > tr').each((i, row) => {
         if ($(row).data('isChild')) {
-            data[data.length-1].child = $(row);
+            child_elems[last_row_id] = $(row);
             $(row).detach();
         } else {
-            data.push({row: $(row).children().toArray().map(x => x.innerHTML), child: null});
+            last_row_id = $(row).find('td > span').data('childKey');
         }
     });
 
     let table = elem.DataTable({
-        // the default, but no search
-        dom: "<'row'<'col-sm-12 col-md-6'l>>" +
-            "<'row'<'col-sm-12'tr>>" +
-            "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-        // data: data.map(d => { })
         columns: [
             {
                 "class":          'dt-control',
@@ -55,14 +51,12 @@ $(document).ready(function () {
                 "data":           null,
                 "defaultContent": ''
             },
-            { data: "row.1" },
-            { data: "row.2" },
-            { data: "row.3" },
+            null, null, null, null,
         ],
-        data: data
     });
     elem.on('click', 'td.dt-control', function () {
         var tr = $(this).closest('tr');
+        let key = $(this).children('span').data('childKey');
         var row = table.row(tr);
  
         if (row.child.isShown()) {
@@ -71,7 +65,7 @@ $(document).ready(function () {
             tr.removeClass('shown');
         } else {
             // Open this row
-            row.child(row.data().child).show();
+            row.child(child_elems[key]).show();
             tr.addClass('shown');
         }
     });
@@ -83,28 +77,35 @@ $(document).ready(function () {
         <th>File</th>
         <th>Verified at</th>
         <th>Mathlib3 changes (newest first)</th>
+        <th>&pm;</th>
     </thead>
     <tbody>
-    {%- for k, (v, commits) in touched.items() %}
+    {%- for k, ((added, removed), diff, commits) in touched.items() %}
         <tr>
-            <td class="dt-control"></td>
+            <td class="dt-control">
+                <span data-child-key="{{k}}"></span>
+            </td>
             <td>
                 <a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
                     <code>{{k}}</code>
                 </a>
             </td>
             <td>{{verified[k] | link_sha }}</td>
-            <td data-sort="{{commits | length}}">
+            <td data-order="{{commits | length}}">
                 <ul>
                     {%- for c in commits %}
                         <li>{{c.hexsha | link_sha}}: {{c.summary | htmlify_comment}}</li>
                     {%- endfor %}
                 </ul>
             </td>
+            <td data-order="{{added + removed}}">
+                <span style="display: none"></span>
+                <span class="text-success" title="added">+{{added}}</span>&nbsp;<span class="text-danger" title="removed">-{{removed}}</span>
+            </td>
         </tr>
         <tr data-is-child="true">
-            <td colspan="4">
-                <pre><code class="language-diff">{{ '\n'.join((v.splitlines()[4:])) }}</code><pre>
+            <td colspan="5">
+                <pre><code class="language-diff">{{ diff }}</code><pre>
             </td>
         </tr>
     {% endfor %}

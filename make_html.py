@@ -208,8 +208,6 @@ def make_out_of_sync(env, html_root, mathlib_dir):
         verified[f_import] = f_status.mathlib3_hash
         fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
         git_command = ['git',
-            # disable abbreviations so that the full (blob not commit!) sha is in the output
-            '-c', 'core.abbrev=no',
             'diff', '--exit-code',
             f'--ignore-matching-lines={comment_git_re}',
             f_status.mathlib3_hash + "..HEAD", "--", fname]
@@ -220,7 +218,12 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                 if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
                     and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
             ]
-            touched[f_import] = (result.stdout, commits)
+            difflines = result.stdout.splitlines()[4:]
+            diffstats = (
+                sum(l.startswith('+') for l in difflines),
+                sum(l.startswith('-') for l in difflines)
+            )
+            touched[f_import] = (diffstats, '\n'.join(difflines), commits)
 
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
