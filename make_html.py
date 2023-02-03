@@ -36,6 +36,7 @@ def mathlib4repo():
 def github_labels(pr):
     try:
         pull_request = mathlib4repo().get_pull(pr)
+        raw_labels = list(pull_request.get_labels())
     except github.RateLimitExceededException:
         if 'GITPOD_HOST' in os.environ:
             warnings.warn(
@@ -52,7 +53,7 @@ def github_labels(pr):
     labels = [{'name': label.name,
                'color': label.color,
                'text_color': text_color_of_color(label.color)}
-              for label in pull_request.get_labels()]
+              for label in raw_labels]
     return labels
 
 

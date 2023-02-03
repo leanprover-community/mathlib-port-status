@@ -29,23 +29,82 @@
 <h1>Possibly out of sync</h1>
 <p>The following {{ touched | length }} files at {{head_sha | link_sha}} have been modified in mathlib3 since the commit at which they were verified.</p>
 <p>It is possible that these changes have already been forward-ported, and all that remains is to update the SHA in the header comment in mathlib4.</p>
-<div class="table-responsive"><table class="table table-sm">
+<script>
+$(document).ready(function () {
+    let elem = $('.sync-table');
+    let data = [];
+    elem.find('tbody > tr').each((i, row) => {
+        if ($(row).data('isChild')) {
+            data[data.length-1].child = $(row);
+            $(row).detach();
+        } else {
+            data.push({row: $(row).children().toArray().map(x => x.innerHTML), child: null});
+        }
+    });
+
+    let table = elem.DataTable({
+        // the default, but no search
+        dom: "<'row'<'col-sm-12 col-md-6'l>>" +
+            "<'row'<'col-sm-12'tr>>" +
+            "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        // data: data.map(d => { })
+        columns: [
+            {
+                "class":          'dt-control',
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": ''
+            },
+            { data: "row.1" },
+            { data: "row.2" },
+            { data: "row.3" },
+        ],
+        data: data
+    });
+    elem.on('click', 'td.dt-control', function () {
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
+ 
+        if (row.child.isShown()) {
+            // This row is already open - close it
+            row.child.hide();
+            tr.removeClass('shown');
+        } else {
+            // Open this row
+            row.child(row.data().child).show();
+            tr.addClass('shown');
+        }
+    });
+});
+</script>
+<div class="table-responsive"><table class="table table-sm sync-table">
+    <thead>
+        <th></th>
+        <th>File</th>
+        <th>Verified at</th>
+        <th>Mathlib3 changes (newest first)</th>
+    </thead>
     <tbody>
     {%- for k, (v, commits) in touched.items() %}
         <tr>
+            <td class="dt-control"></td>
             <td>
-                <details>
-                    <summary><a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
-                    <code>{{k}}</code></a> (verified at {{verified[k] | link_sha }})</summary>
-                    <p>Changes (newest first)</p>
-                    <ul>
-                        {%- for c in commits %}
-                            <li>{{c.hexsha | link_sha}}: {{c.summary | htmlify_comment}}</li>
-                        {%- endfor %}
-                    </ul>
-                
-                    <pre><code class="language-diff">{{ '\n'.join((v.splitlines()[4:])) }}</code><pre>
-                </details>
+                <a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                    <code>{{k}}</code>
+                </a>
+            </td>
+            <td>{{verified[k] | link_sha }}</td>
+            <td data-sort="{{commits | length}}">
+                <ul>
+                    {%- for c in commits %}
+                        <li>{{c.hexsha | link_sha}}: {{c.summary | htmlify_comment}}</li>
+                    {%- endfor %}
+                </ul>
+            </td>
+        </tr>
+        <tr data-is-child="true">
+            <td colspan="4">
+                <pre><code class="language-diff">{{ '\n'.join((v.splitlines()[4:])) }}</code><pre>
             </td>
         </tr>
     {% endfor %}
