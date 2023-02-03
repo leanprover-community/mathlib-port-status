@@ -10,6 +10,7 @@ graph LR;
     port-comments[/"<a href='https://raw.githubusercontent.com/wiki/leanprover-community/mathlib4/port-comments.md'>port comments</a>"/]
     run_port_status["<a href='https://github.com/leanprover-community/mathlib4/blob/master/scripts/run_port_status.sh'>run_port_status.sh</a><br />(On @jcommelin's server every 30 minutes)"]
     port-wiki[/"<a href='https://github.com/leanprover-community/mathlib/wiki/mathlib4-port-status'>port wiki</a>"/]
+    port-wiki-yaml[/"<a href='https://github.com/leanprover-community/mathlib/wiki/mathlib4-port-status-yaml'>port wiki V2</a>"/]
     mathlibtools[[mathlibtools]]
     mathlib-port-status-ci[mathlib-port-status CI<br />On github actions every 30 minutes]
     mathlib-port-status[/"<a href='https://leanprover-community.github.io/mathlib-port-status/'>mathlib-port-status</a>"/]
@@ -18,6 +19,7 @@ graph LR;
     mathlib4-->run_port_status;
     port-comments-->run_port_status;
     run_port_status-->port-wiki;
+    run_port_status-->port-wiki-yaml;
     port-wiki-->mathlibtools;
     mathlibtools-->mathlib3-ci;
     mathlibtools-->mathlib3-comments;
@@ -25,7 +27,8 @@ graph LR;
 
     mathlib3 <-----> mathlib3-comments;
 
-    mathlibtools-->mathlib-port-status-ci;
+    port-wiki-yaml-->mathlib-port-status-ci;
+    mathlibtools-- "Used only for the <code>/old</code> page" -->mathlib-port-status-ci;
     mathlib3-->mathlib-port-status-ci;
     mathlib4-->mathlib-port-status-ci;
     mathlib-port-status-ci-->mathlib-port-status;
