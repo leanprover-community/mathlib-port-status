@@ -97,26 +97,28 @@
             </thead>
             <tbody>
             {%- for f_import, f_data in unported.items()|sort(attribute='1.dep_counts_sort_key') %}
-                {%- set parts = f_data.dep_counts %}
-                <tr {%- if parts and parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
-                    <td>
-                        <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
-                            <code>{{f_import}}</code></a>
-                    </td>
-                    <td>{{f_data.status.comment.message | htmlify_comment}}</td>
-                    <td data-sort="{{f_data.dep_counts_sort_key}}">
-                    {%- if parts is not none %}
-                        {%- set plus = joiner(" + ") %}
-                        {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
-                        {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
-                        {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
-                    {%- else %}
-                        ?
-                    {%- endif %}
-                    </td>
-                    <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
-                    <td>{{f_data.lines if f_data.lines}}</td>
-                </tr>
+                {%- if f_data.status.comment.should_port %}
+                    {%- set parts = f_data.dep_counts %}
+                    <tr {%- if parts and parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
+                        <td>
+                            <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
+                                <code>{{f_import}}</code></a>
+                        </td>
+                        <td>{{f_data.status.comment.message | htmlify_comment}}</td>
+                        <td data-sort="{{f_data.dep_counts_sort_key}}">
+                        {%- if parts is not none %}
+                            {%- set plus = joiner(" + ") %}
+                            {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
+                            {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
+                            {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
+                        {%- else %}
+                            ?
+                        {%- endif %}
+                        </td>
+                        <td>{%- if f_data.dependents is not none %}{{f_data.dependents|length}}{%- else %}?{%- endif %}</td>
+                        <td>{{f_data.lines if f_data.lines}}</td>
+                    </tr>
+                {%- endif %}
             {%- endfor %}
             </tbody>
         </table></div>
