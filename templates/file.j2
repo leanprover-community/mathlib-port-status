@@ -1,5 +1,13 @@
 {% extends "layout.j2" %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="hljs-light.css">
+<link rel="stylesheet" href="hljs-dark.css">
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+{% endblock %}
+
 {% block body %}
 
 <h1>
@@ -20,9 +28,16 @@
 <pre><code class="language-diff">{{ diff }}</code></pre>
 {% endif %}
 
-<h2>Dependencies</h2>
+{% set parts = data.dep_counts %}
+<h2>Dependencies <small>
+    {%- set plus = joiner(" + ") %}
+    {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
+    {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
+    {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
+</small></h2>
+<p>The unported dependencies are</p>
 <ul>
-    {% for d in data.dependencies %}
+    {% for d in data.dependencies|rejectattr("state", "equalto", PortState.PORTED) %}
         <li><a href="{{ site_url }}/file/{{d.mathlib3_import|join('/')}}"><code>{{d.mathlib3_import|join('.')}}</code></a></li>
     {% endfor %}
 </ul>

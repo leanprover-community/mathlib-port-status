@@ -143,6 +143,7 @@ template_env = jinja2.Environment(loader=template_loader)
 template_env.filters['htmlify_comment'] = htmlify_comment
 template_env.filters['link_sha'] = link_sha
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
+template_env.globals['PortState'] = PortState
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 
