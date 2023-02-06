@@ -18,16 +18,20 @@
     <a href="https://leanprover-community.github.io/mathlib4_docs/{{mathlib4_import|join('/')}}"><code>{{mathlib4_import|join('.')}}</code></a>
     {% else %}?{% endif %}</a>
 </h1>
-
 {% if touched %}
 {% set ((added, removed), diff, commits) = touched %}
 <h2 id="forward-port">Changes needing forward-porting</h2>
+<p>The most recent change is shown first.</p>
 <ul>
     {%- for c in commits %}
         <li>{{c.hexsha | link_sha}}: {{c.summary | htmlify_comment}}</li>
     {%- endfor %}
 </ul>
 <pre><code class="language-diff">{{ diff }}</code></pre>
+{% if commits %}
+<p>After forward-porting this diff, please update the SHA in the file header to <code>{{commits[0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers.
+If they exist, also link to any forward-port PRs that already forward-ported it.</p>
+{% endif %}
 {% endif %}
 
 {% set parts = data.dep_counts %}
