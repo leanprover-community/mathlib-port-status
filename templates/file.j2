@@ -1,0 +1,31 @@
+{% extends "layout.j2" %}
+
+{% block body %}
+
+<h1>
+    <a href="https://leanprover-community.github.io/mathlib_docs/{{mathlib3_import|join('/')}}"><code>{{mathlib3_import|join('.')}}</code></a> ⟷
+    {% if mathlib4_import is not none %}
+    <a href="https://leanprover-community.github.io/mathlib4_docs/{{mathlib4_import|join('/')}}"><code>{{mathlib4_import|join('.')}}</code></a>
+    {% else %}?{% endif %}</a>
+</h1>
+
+{% if touched %}
+{% set ((added, removed), diff, commits) = touched %}
+<h2 id="forward-port">Changes needing forward-porting</h2>
+<ul>
+    {%- for c in commits %}
+        <li>{{c.hexsha | link_sha}}: {{c.summary | htmlify_comment}}</li>
+    {%- endfor %}
+</ul>
+<pre><code class="language-diff">{{ diff }}</code></pre>
+{% endif %}
+
+<h2>Dependencies</h2>
+<ul>
+    {% for d in data.dependencies %}
+        <li><a href="{{ site_url }}/file/{{d.mathlib3_import|join('/')}}"><code>{{d.mathlib3_import|join('.')}}</code></a></li>
+    {% endfor %}
+</ul>
+
+
+{% endblock %}

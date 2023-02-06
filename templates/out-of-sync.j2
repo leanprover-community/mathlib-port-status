@@ -81,7 +81,7 @@ $(document).ready(function () {
                 <span data-child-key="{{k}}"></span>
             </td>
             <td>
-                <a href="https://leanprover-community.github.io/mathlib_docs/{{k.replace('.', '/')}}">
+                <a href="{{site_url}}/file/{{k.replace('.', '/')}}">
                     <code>{{k}}</code>
                 </a>
             </td>
@@ -100,7 +100,7 @@ $(document).ready(function () {
         </tr>
         <tr data-is-child="true">
             <td colspan="5">
-                <pre><code class="language-diff">{{ diff }}</code><pre>
+                <pre><code class="language-diff">{{ diff }}</code></pre>
             </td>
         </tr>
     {% endfor %}

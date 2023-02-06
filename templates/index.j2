@@ -59,7 +59,7 @@
             {%- for f_import, f_data in in_progress.items() %}
                 <tr>
                     <td>
-                        <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
+                        <a href="{{site_url}}/file/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>
@@ -100,7 +100,7 @@
                 {%- set parts = f_data.dep_counts %}
                 <tr {%- if parts and parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
                     <td>
-                        <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
+                        <a href="{{site_url}}/file/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>{{f_data.status.comment.message | htmlify_comment}}</td>
@@ -134,7 +134,7 @@
             {%- for f_import, f_data in ported.items() %}
                 <tr>
                     <td>
-                        <a href="https://leanprover-community.github.io/mathlib_docs/{{f_import.replace('.', '/')}}">
+                        <a href="{{site_url}}/file/{{f_import.replace('.', '/')}}">
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>

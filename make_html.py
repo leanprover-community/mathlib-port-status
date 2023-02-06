@@ -95,6 +95,7 @@ class PortState(Enum):
 
 @dataclass
 class Mathlib3FileData:
+    mathlib3_import: List[str]
     status: port_status_yaml.PortStatusEntry
     lines: Optional[int]
     labels: Optional[List[dict[str, str]]]
@@ -141,7 +142,7 @@ template_loader = jinja2.FileSystemLoader(searchpath="templates/")
 template_env = jinja2.Environment(loader=template_loader)
 template_env.filters['htmlify_comment'] = htmlify_comment
 template_env.filters['link_sha'] = link_sha
-template_env.globals['site_url'] = os.environ.get('SITE_URL', '/')
+template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 
@@ -151,7 +152,8 @@ graph = parse_imports(mathlib_dir / 'src')
 
 shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 
-def make_index(env, html_root):
+@functools.cache
+def get_data():
     data = {}
     for f_import, f_status in port_status.items():
         path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
@@ -161,11 +163,24 @@ def make_index(env, html_root):
         except IOError:
             lines = None
         data[f_import] = Mathlib3FileData(
+            mathlib3_import=f_import.split('.'),
             status=f_status,
             lines=lines,
             labels=github_labels(f_status.mathlib4_pr) if ((not f_status.ported) and
                                                             f_status.mathlib4_pr) else []
         )
+    for f_import, f_data in data.items():
+        if f_import in graph:
+            f_data.dependents = [
+                data[k] for k in nx.descendants(graph, f_import) if k in data
+            ]
+            f_data.dependencies = [
+                data[k] for k in nx.ancestors(graph, f_import) if k in data
+            ]
+    return data
+
+def make_index(env, html_root):
+    data = get_data()
     ported = {}
     in_progress = {}
     unported = {}
@@ -175,13 +190,6 @@ def make_index(env, html_root):
         PortState.UNPORTED: unported,
     }
     for f_import, f_data in data.items():
-        if f_import in graph:
-            f_data.dependents = [
-                data[k] for k in nx.descendants(graph, f_import) if k in data
-            ]
-            f_data.dependencies = [
-                data[k] for k in nx.ancestors(graph, f_import) if k in data
-            ]
         groups[f_data.state][f_import] = f_data
 
     with (build_dir / 'html' / 'index.html').open('w') as index_f:
@@ -224,6 +232,21 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                 sum(l.startswith('-') for l in difflines)
             )
             touched[f_import] = (diffstats, '\n'.join(difflines), commits)
+
+    for f_import, f_status in port_status.items():
+        path =  (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
+        path.parent.mkdir(exist_ok=True, parents=True)
+        with path.open('w') as file_f:
+            if f_status.mathlib4_file is None:
+                mathlib4_import = None
+            else:
+                mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
+            file_f.write(env.get_template('file.j2').render(
+                mathlib3_import=f_import.split('.'),
+                mathlib4_import=mathlib4_import,
+                data=get_data().get(f_import),
+                touched=touched.get(f_import)
+            ))
 
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(

@@ -17,6 +17,7 @@ class PortStatusEntry:
     ported: bool
     mathlib3_hash: Optional[str]
     mathlib4_pr: Optional[int]
+    mathlib4_file: Optional[str]
     comment: Comment = field(default_factory=Comment)
 
 def yaml_md_load(wikicontent: bytes):
