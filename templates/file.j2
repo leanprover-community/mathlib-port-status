@@ -2,8 +2,8 @@
 
 {% block head %}
 {{ super() }}
-<link rel="stylesheet" href="hljs-light.css">
-<link rel="stylesheet" href="hljs-dark.css">
+<link rel="stylesheet" href="{{site_url}}/hljs-light.css">
+<link rel="stylesheet" href="{{site_url}}/hljs-dark.css">
 <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 {% endblock %}
