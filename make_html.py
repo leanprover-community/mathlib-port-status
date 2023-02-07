@@ -257,7 +257,8 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
             touched=touched, verified=verified,
-            head_sha=mathlib_repo.head.object
+            head_sha=mathlib_repo.head.object,
+            data=get_data(),
         ))
 
 make_index(template_env, build_dir / 'html')

@@ -29,6 +29,7 @@
 <h1>Possibly out of sync</h1>
 <p>The following {{ touched | length }} files at {{head_sha | link_sha}} have been modified in mathlib3 since the commit at which they were verified.</p>
 <p>It is possible that these changes have already been forward-ported, and all that remains is to update the SHA in the header comment in mathlib4.</p>
+<p>Some files might <span class="border rounded d-inline-flex text-warning-emphasis bg-warning-subtle border-warning-subtle">be in progress</span>!</p>
 <script>
 $(document).ready(function () {
     let elem = $('.sync-table');
@@ -76,7 +77,7 @@ $(document).ready(function () {
     </thead>
     <tbody>
     {%- for k, ((added, removed), diff, commits) in touched.items() %}
-        <tr>
+        <tr{% if not data[k].status.ported %} class="table-warning"{% endif %}>
             <td class="dt-control">
                 <span data-child-key="{{k}}"></span>
             </td>
@@ -98,7 +99,7 @@ $(document).ready(function () {
                 <span class="text-success" title="added">+{{added}}</span>&nbsp;<span class="text-danger" title="removed">-{{removed}}</span>
             </td>
         </tr>
-        <tr data-is-child="true">
+        <tr{% if not data[k].status.ported %} class="table-warning"{% endif %} data-is-child="true">
             <td colspan="5">
                 <pre><code class="language-diff">{{ diff }}</code></pre>
             </td>
