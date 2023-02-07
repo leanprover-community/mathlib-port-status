@@ -36,7 +36,7 @@ def load() -> dict[str, PortStatusEntry]:
         try:
             mathlib3_hash = v.pop('mathlib3_hash')
         except KeyError:
-            pass
+            continue
         if mathlib3_hash is not None:
             v['source'] = dict(repo='leanprover-community/mathlib', commit=mathlib3_hash)
 
