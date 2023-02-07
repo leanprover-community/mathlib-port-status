@@ -14,8 +14,10 @@
 
 <h1>
     <a href="https://leanprover-community.github.io/mathlib_docs/{{mathlib3_import|join('/')}}"><code>{{mathlib3_import|join('.')}}</code></a> ⟷
-    {% if mathlib4_import is not none %}
+    {% if data.status.ported %}
     <a href="https://leanprover-community.github.io/mathlib4_docs/{{mathlib4_import|join('/')}}"><code>{{mathlib4_import|join('.')}}</code></a>
+    {% elif mathlib4_import is not none %}
+    <code class="text-muted">{{mathlib4_import|join('.')}}</code>
     {% else %}?{% endif %}</a>
 </h1>
 {% if data.state == PortState.PORTED%}
