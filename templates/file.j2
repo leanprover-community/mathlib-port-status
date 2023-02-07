@@ -49,7 +49,7 @@ if (range != null) {
             {% set msg = c.message.split('\n', 1) %}
             <p>{{c | link_sha}}: {{msg[0] | htmlify_comment}}</p>
             {% if msg|length > 1 %}
-                <pre><code class="language-markdown">{{msg[1] | htmlify_comment}}</code></pre>
+                <pre style="white-space: pre-wrap"><code class="language-markdown">{{msg[1].strip() | htmlify_comment}}</code></pre>
             {% endif %}
         </li>
     {%- endfor %}
