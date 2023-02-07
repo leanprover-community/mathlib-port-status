@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 import os
 import warnings
 
@@ -106,7 +106,7 @@ class Mathlib3FileData:
     def state(self):
         if self.status.ported:
             return PortState.PORTED
-        elif self.status.mathlib4_pr and self.status.mathlib3_hash:
+        elif self.status.mathlib4_pr and self.status.source:
             # PR is meaningless without the hash, as it might be an ad-hoc port
             return PortState.IN_PROGRESS
         else:
@@ -128,10 +128,15 @@ class Mathlib3FileData:
         u, i, p = self.dep_counts
         return u*10000*IN_PROGRESS_EQUIV_UNPORTED+i*10000
 
-def link_sha(sha: str) -> Markup:
+def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) -> Markup:
+    if isinstance(sha, git.Commit):
+        url = sha.repo.remotes[0].url
+        assert url.startswith('https://github.com/')
+        url = url.removeprefix('https://github.com/')
+        sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
     return Markup(
-        '<a href="https://github.com/leanprover-community/mathlib/commits/{sha}">{short_sha}</a>'
-    ).format(sha=sha, short_sha=sha[:8])
+        '<a href="https://github.com/{repo}/commits/{sha}">{short_sha}</a>'
+    ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8])
 
 port_status = port_status_yaml.load()
 
@@ -212,18 +217,18 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     touched = {}
     verified = {}
     for f_import, f_status in port_status.items():
-        if not f_status.mathlib3_hash:
+        if not f_status.source or f_status.source.repo != 'leanprover-community/mathlib':
             continue
-        verified[f_import] = f_status.mathlib3_hash
+        verified[f_import] = f_status.source
         fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
         git_command = ['git',
             'diff', '--exit-code',
             f'--ignore-matching-lines={comment_git_re}',
-            f_status.mathlib3_hash + "..HEAD", "--", fname]
+            f_status.source.commit + "..HEAD", "--", fname]
         result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
         if result.returncode == 1:
             commits = [
-                c for c in mathlib_repo.iter_commits(f'{f_status.mathlib3_hash}..HEAD', fname)
+                c for c in mathlib_repo.iter_commits(f'{f_status.source.commit}..HEAD', fname)
                 if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
                     and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
             ]
@@ -252,7 +257,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
             touched=touched, verified=verified,
-            head_sha=mathlib_repo.head.object.hexsha
+            head_sha=mathlib_repo.head.object
         ))
 
 make_index(template_env, build_dir / 'html')

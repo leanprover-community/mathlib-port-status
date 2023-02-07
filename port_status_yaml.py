@@ -14,8 +14,12 @@ class PortStatusEntry:
     class Comment:
         message: Optional[str] = None
         should_port: bool = True
+    @dataclass
+    class Source:
+        repo: str
+        commit: str
     ported: bool
-    mathlib3_hash: Optional[str]
+    source: Optional[Source]
     mathlib4_pr: Optional[int]
     mathlib4_file: Optional[str]
     comment: Comment = field(default_factory=Comment)
@@ -27,16 +31,14 @@ def load() -> dict[str, PortStatusEntry]:
     port_status = yaml_md_load(
         requests.get("https://raw.githubusercontent.com/wiki/leanprover-community/mathlib/mathlib4-port-status-yaml.md").content)
 
-    # workaround for https://github.com/leanprover-community/mathlib4/pull/2024, delete once merged
+    # workaround for https://github.com/leanprover-community/mathlib4/pull/2119, delete once merged
     for k, v in port_status.items():
         try:
-            mathlib4_pr = v['mathlib4_pr']
+            mathlib3_hash = v.pop('mathlib3_hash')
         except KeyError:
             pass
-        if mathlib4_pr == '_':
-            v['mathlib4_pr'] = None
-        elif isinstance(mathlib4_pr, str):
-            v['mathlib4_pr'] = int(mathlib4_pr.removeprefix('mathlib4#'))
+        if mathlib3_hash is not None:
+            v['source'] = dict(repo='leanprover-community/mathlib', commit=mathlib3_hash)
 
     return  {
         k: dacite.from_dict(data_class=PortStatusEntry, data=v)

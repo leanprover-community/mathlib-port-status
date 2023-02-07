@@ -138,8 +138,8 @@
                             <code>{{f_import}}</code></a>
                     </td>
                     <td>
-                        {%- if f_data.status.mathlib3_hash %}
-                            {{f_data.status.mathlib3_hash | link_sha}}
+                        {%- if f_data.status.source %}
+                            {{f_data.status.source | link_sha}}
                         {%- endif %}
                     </td>
                     <td>{{f_data.status.comment.message | htmlify_comment}}</td>

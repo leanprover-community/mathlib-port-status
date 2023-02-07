@@ -89,7 +89,7 @@ $(document).ready(function () {
             <td data-order="{{commits | length}}">
                 <ul>
                     {%- for c in commits %}
-                        <li>{{c.hexsha | link_sha}}: {{c.summary | htmlify_comment}}</li>
+                        <li>{{c | link_sha}}: {{c.summary | htmlify_comment}}</li>
                     {%- endfor %}
                 </ul>
             </td>
