@@ -45,7 +45,13 @@ if (range != null) {
 <p>The most recent change is shown first.</p>
 <ul>
     {%- for c in commits %}
-        <li>{{c | link_sha}}: {{c.summary | htmlify_comment}}</li>
+        <li>
+            {% set msg = c.message.split('\n', 1) %}
+            <p>{{c | link_sha}}: {{msg[0] | htmlify_comment}}</p>
+            {% if msg|length > 1 %}
+                <pre><code class="language-markdown">{{msg[1] | htmlify_comment}}</code></pre>
+            {% endif %}
+        </li>
     {%- endfor %}
     <li>{{data.status.source | link_sha}} <span class="text-muted">(last sync)</span></li>
 </ul>
