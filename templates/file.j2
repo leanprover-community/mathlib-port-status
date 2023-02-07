@@ -18,6 +18,25 @@
     <a href="https://leanprover-community.github.io/mathlib4_docs/{{mathlib4_import|join('/')}}"><code>{{mathlib4_import|join('.')}}</code></a>
     {% else %}?{% endif %}</a>
 </h1>
+{% if data.state == PortState.PORTED%}
+<div class="alert alert-success">This file has been ported!</div>
+{% elif data.state == PortState.IN_PROGRESS %}
+<div class="alert alert-warning">This file is currently being ported at <a href="https://github.com/leanprover-community/mathlib4/pull/{{data.status.mathlib4_pr}}">#{{data.status.mathlib4_pr}}</a>.</div>
+{% endif %}
+<script>
+var range = new URLSearchParams(window.location.search).get('range');
+if (range != null) {
+    let [base, head] = range.split('..', 2);
+    document.currentScript.insertAdjacentElement('beforebegin',
+    $('<div>').addClass('alert alert-info').append(
+        'You arrived at this page via a link referring to ',
+        $('<code>').text(base),
+        "..",
+        $('<code>').text(head),
+        '. These commits might no longer be shown here!'
+    )[0]);
+}
+</script>
 {% if touched %}
 {% set ((added, removed), diff, commits) = touched %}
 <h2 id="forward-port">Changes needing forward-porting</h2>
@@ -31,9 +50,7 @@
 <pre><code class="language-diff">{{ diff }}</code></pre>
 {% if commits %}
 <p>After forward-porting this diff, please update the SHA in the file header to <code>{{commits[0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers as shown:</p>
-<pre><code class="lang-markdown">
-* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{commits[0].hexsha}}`]
-    ({{site_url}}/file/{{mathlib3_import|join('/')}}?from={{data.status.source.commit}}&to={{commits[0].hexsha}})
+<pre><code class="lang-markdown" style="white-space: pre-wrap">* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{commits[0].hexsha}}`]({{site_url}}/file/{{mathlib3_import|join('/')}}?range={{data.status.source.commit}}..{{commits[0].hexsha}})
 </code></pre>
 <p>If they exist, also link to any forward-port PRs that already forward-ported it.</p>
 {% endif %}
