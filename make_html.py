@@ -113,7 +113,7 @@ class Mathlib3FileData:
             return PortState.UNPORTED
     @functools.cached_property
     def dep_counts(self):
-        if self.dependencies:
+        if self.dependencies is not None:
             return tuple(
                 len([x for x in self.dependencies if x.state == s])
                 for s in PortState)
