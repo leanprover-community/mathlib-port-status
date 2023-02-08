@@ -25,9 +25,16 @@
 {% elif data.state == PortState.IN_PROGRESS %}
 <div class="alert alert-warning">This file is currently being ported at <a href="https://github.com/leanprover-community/mathlib4/pull/{{data.status.mathlib4_pr}}">#{{data.status.mathlib4_pr}}</a>.</div>
 {% endif %}
-{% if data.status.comments %}
-<p>The comments for this file (from <a href="https://github.com/leanprover-community/mathlib4/wiki/port-comments">here</a>) are</p>
-<blockquote>{{ data.status.comments | htmlify_comment }}</blockquote>
+{% if data.status.comment.message is not none %}
+<p>Before working on this file, consider the following:</p>
+<figure>
+  <blockquote class="blockquote">
+    <p>{{ data.status.comment.message | htmlify_comment }}</p>
+  </blockquote>
+  <figcaption class="blockquote-footer">
+    From <a href="https://github.com/leanprover-community/mathlib4/wiki/port-comments">the port comment wiki</a>
+  </figcaption>
+</figure>
 {% endif %}
 <script>
 var range = new URLSearchParams(window.location.search).get('range');
