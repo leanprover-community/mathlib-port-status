@@ -200,7 +200,9 @@ def make_index(env, html_root):
 
     with (build_dir / 'html' / 'index.html').open('w') as index_f:
         index_f.write(
-            env.get_template('index.j2').render(ported=ported, unported=unported, in_progress=in_progress))
+            env.get_template('index.j2').render(
+                all=data.values(),
+                ported=ported, unported=unported, in_progress=in_progress))
 
 def make_out_of_sync(env, html_root, mathlib_dir):
     # Not using re.compile as this is passed to git which uses a different regex dialect:

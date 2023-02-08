@@ -1,4 +1,5 @@
 {% extends "layout.j2" %}
+{% import 'progress.j2' as progress -%}
 
 {% block head %}
 {{ super() }}
@@ -34,6 +35,7 @@
     <code class="text-muted">{{mathlib4_import|join('.')}}</code>
     {% else %}?{% endif %}</a>
 </h1>
+
 {% if data.state == PortState.PORTED%}
 <div class="alert alert-success">This file has been ported!</div>
 {% elif data.state == PortState.IN_PROGRESS %}
@@ -96,6 +98,7 @@ if (range != null) {
     {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
     {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
 </small></h2>
+{{ progress.bars(data.dependencies) }}
 <p>The unported dependencies are</p>
 <ul>
     {% for d in data.dependencies|rejectattr("state", "equalto", PortState.PORTED) %}
