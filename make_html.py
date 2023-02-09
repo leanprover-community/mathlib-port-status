@@ -131,8 +131,9 @@ class Mathlib3FileData:
 def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) -> Markup:
     if isinstance(sha, git.Commit):
         url = sha.repo.remotes[0].url
-        assert url.startswith('https://github.com/')
-        url = url.removeprefix('https://github.com/')
+        assert url.startswith('https://github.com/') or url.startswith('git@github.com:')
+        url = url.removeprefix('https://github.com/') if url.startswith(
+            'https://github.com/') else url.removeprefix('git@github.com:')
         sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
     return Markup(
         '<a href="https://github.com/{repo}/commits/{sha}">{short_sha}</a>'
