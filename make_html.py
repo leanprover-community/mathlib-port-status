@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict, Union, Tuple
 import os
 import warnings
 
@@ -94,6 +94,24 @@ class PortState(Enum):
     PORTED = 'PORTED'
 
 @dataclass
+class ForwardPortInfo:
+    commits: List[git.Commit]
+    diff_lines: List[str]
+
+    @property
+    def diff(self) -> str:
+        return "\n".join(self.diff_lines)
+
+    @property
+    def diff_stat(self) -> Tuple[int, int]:
+        return (
+            sum(l.startswith('+') for l in self.diff_lines),
+            sum(l.startswith('-') for l in self.diff_lines)
+        )
+
+
+
+@dataclass
 class Mathlib3FileData:
     mathlib3_import: List[str]
     status: port_status_yaml.PortStatusEntry
@@ -101,6 +119,7 @@ class Mathlib3FileData:
     labels: Optional[List[dict[str, str]]]
     dependents: Optional[List['Mathlib3FileData']] = None
     dependencies: Optional[List['Mathlib3FileData']] = None
+    forward_port: Optional[ForwardPortInfo] = None
 
     @functools.cached_property
     def state(self):
@@ -215,13 +234,12 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     ]) + r")" + "\n"
 
     mathlib_repo = git.Repo(mathlib_dir)
+    data = get_data()
 
     touched = {}
-    verified = {}
     for f_import, f_status in port_status.items():
         if not f_status.source or f_status.source.repo != 'leanprover-community/mathlib':
             continue
-        verified[f_import] = f_status.source
         fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
         git_command = ['git',
             'diff', '--exit-code',
@@ -234,12 +252,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                 if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
                     and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
             ]
-            difflines = result.stdout.splitlines()[4:]
-            diffstats = (
-                sum(l.startswith('+') for l in difflines),
-                sum(l.startswith('-') for l in difflines)
-            )
-            touched[f_import] = (diffstats, '\n'.join(difflines), commits)
+            data[f_import].forward_port = ForwardPortInfo(commits, result.stdout.splitlines()[4:])
 
     for f_import, f_status in port_status.items():
         path =  (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
@@ -252,13 +265,11 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             file_f.write(env.get_template('file.j2').render(
                 mathlib3_import=f_import.split('.'),
                 mathlib4_import=mathlib4_import,
-                data=get_data().get(f_import),
-                touched=touched.get(f_import)
+                data=get_data().get(f_import)
             ))
 
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
-            touched=touched, verified=verified,
             head_sha=mathlib_repo.head.object,
             data=get_data(),
         ))
