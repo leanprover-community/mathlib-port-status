@@ -70,18 +70,22 @@ if (range != null) {
 {% set (added, removed) = data.forward_port.diff_stat %}
 <h2 id="forward-port">Changes needing forward-porting</h2>
 <p>The most recent change is shown first.</p>
-<ul>
+<div>
     {%- for c in data.forward_port.commits %}
-        <li>
-            {% set msg = c.message.split('\n', 1) %}
-            <p>{{c | link_sha}}: {{msg[0] | htmlify_comment}}</p>
+        {% set msg = c.message.split('\n', 1) %}
+        <div class="row">
+            <div class="col-1">{{c | link_sha}}</div>
+            <div class="col-11 fw-semibold"><p>{{msg[0] | htmlify_comment}}</p></div>
             {% if msg|length > 1 %}
-                <pre style="white-space: pre-wrap"><code class="language-markdown">{{msg[1].strip() | htmlify_comment}}</code></pre>
+                <div class="col-11 offset-1">{{msg[1] | htmlify_text}}</div>
             {% endif %}
-        </li>
+        </div>
     {%- endfor %}
-    <li>{{data.status.source | link_sha}} <span class="text-muted">(last sync)</span></li>
-</ul>
+    <div class="row">
+        <div class="col-1">{{data.status.source | link_sha}}</div>
+        <div class="col-11 text-muted"><p>(last sync)</p></div>
+    </div>
+</div>
 <pre><code class="language-diff">{{ data.forward_port.diff }}</code></pre>
 {% if data.forward_port.commits %}
 <p>After forward-porting this diff, please update the SHA in the file header to <code>{{data.forward_port.commits[0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers as shown:</p>

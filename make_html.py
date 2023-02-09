@@ -21,7 +21,7 @@ import yaml
 
 import make_old_html
 import port_status_yaml
-from htmlify_comment import htmlify_comment
+from htmlify_comment import htmlify_comment, htmlify_text
 
 
 github_token = os.environ.get("GITHUB_TOKEN")
@@ -165,6 +165,7 @@ build_dir.mkdir(parents=True, exist_ok=True)
 template_loader = jinja2.FileSystemLoader(searchpath="templates/")
 template_env = jinja2.Environment(loader=template_loader)
 template_env.filters['htmlify_comment'] = htmlify_comment
+template_env.filters['htmlify_text'] = htmlify_text
 template_env.filters['link_sha'] = link_sha
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState

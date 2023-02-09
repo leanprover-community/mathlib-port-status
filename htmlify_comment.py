@@ -1,8 +1,9 @@
 import re
 from markupsafe import Markup
 from typing import Optional
+import pycmarkgfm
 
-def htmlify_comment(s: Optional[str]) -> Markup:
+def htmlify_text(s: Optional[str]) -> Markup:
     """Add links to a comment from the yaml file"""
 
     if s is None:
@@ -20,15 +21,20 @@ def htmlify_comment(s: Optional[str]) -> Markup:
                 'lean4': 'leanprover/lean4',
                 'lean': 'leanprover-community/lean',
             }.get(repo, repo)
-            return Markup(f'<a href="https://github.com/{repo}/pull/{pull}">{m.group(0)}</a>')
+            return f'[{m.group(0)}](https://github.com/{repo}/pull/{pull})'
         elif m.group(3) is not None:
-            return Markup(f'<a href="https://github.com/leanprover-community/mathlib/commit/{m.group(3)}">{m.group(0)[:8]}</a>')
+            return f'[{m.group(0)[:8]}](https://github.com/leanprover-community/mathlib/commit/{m.group(3)})'
         elif m.group(4) is not None:
-            return Markup(f'<a href="https://github.com/{m.group(4)}">{m.group(0)}</a>')
-        elif m.group(5) is not None:
-            return Markup('<code>{}</code>').format(m.group(5))
+            return f'[{m.group(0)}](https://github.com/{m.group(4)})'
         else:
-            return Markup.escape(m.group(0))
-    return Markup(re.sub(
-        r'(?:([-_a-zA-Z0-9/]*)#([0-9]+))|([0-9a-f]{40})|@([-a-z0-9A-Z_]+)|`([^`]+)`|.*?',
-        repl_func, s))
+            return m.group(0)
+    # TODO: no easy way to build this as an extension for pycmarkgfm
+    hacked_links = re.sub(
+        r'(?:([-_a-zA-Z0-9/]*)#([0-9]+))|([0-9a-f]{40})|@([-a-z0-9A-Z_]+)|.*?',
+        repl_func, s)
+    return Markup(pycmarkgfm.gfm_to_html(hacked_links))
+
+def htmlify_comment(s: Optional[str]) -> Markup:
+    m = htmlify_text(s)
+    m = re.sub(r'^<p>(.*)</p>', r'\1', str(m))
+    return Markup(m)
