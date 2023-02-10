@@ -28,7 +28,7 @@ graph LR;
     mathlib3 <-----> mathlib3-comments;
 
     port-wiki-yaml-->mathlib-port-status-ci;
-    mathlibtools-- "Used only for the <code>/old</code> page" -->mathlib-port-status-ci;
+    mathlibtools-.->|"Only for<br /><code>/old</code>"| mathlib-port-status-ci;
     mathlib3-->mathlib-port-status-ci;
     mathlib4-->mathlib-port-status-ci;
     mathlib-port-status-ci-->mathlib-port-status;
