@@ -12,9 +12,10 @@ function make_graph(svgNode, data){
 
 
   const svgSelection = d3.select(svgNode);
+  const rootSelection = svgSelection.append('g');
   let zoom = d3.zoom().on('zoom', handleZoom);
   function handleZoom(e) {
-    svgSelection.selectAll("g").attr('transform', e.transform);
+    rootSelection.attr('transform', e.transform);
   }
 
   svgSelection.call(zoom);
@@ -39,7 +40,7 @@ function make_graph(svgNode, data){
     .y((d) => d.y);
 
   // Plot edges
-  svgSelection
+  rootSelection
     .append("g")
     .selectAll("path")
     .data(dag.links())
@@ -71,7 +72,7 @@ function make_graph(svgNode, data){
     });
 
   // Select nodes
-  const nodes = svgSelection
+  const nodes = rootSelection
     .append("g")
     .selectAll("g")
     .data(dag.descendants())
