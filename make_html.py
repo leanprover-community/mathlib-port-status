@@ -270,7 +270,8 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             file_f.write(env.get_template('file.j2').render(
                 mathlib3_import=f_import.split('.'),
                 mathlib4_import=mathlib4_import,
-                data=get_data().get(f_import)
+                data=get_data().get(f_import),
+                graph=graph
             ))
 
     with (html_root / 'out-of-sync.html').open('w') as index_f:

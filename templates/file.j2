@@ -6,6 +6,9 @@
 <link rel="stylesheet" href="{{site_url}}/hljs-light.css">
 <link rel="stylesheet" href="{{site_url}}/hljs-dark.css">
 <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+<script src="https://unpkg.com/d3-dag@0.11.1"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="{{site_url}}/graph.js"></script>
 <script>hljs.highlightAll();</script>
 {% endblock %}
 
@@ -102,8 +105,8 @@ if (range != null) {
     {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
     {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
 </small></h2>
-{{ progress.bars(data.dependencies) }}
-{% set unported_deps = data.dependencies|rejectattr("state", "equalto", PortState.PORTED)|list%}
+{{ progress.bars([data] + data.dependencies) }}
+{% set unported_deps = ([data] + data.dependencies)|rejectattr("state", "equalto", PortState.PORTED)|list%}
 {% if unported_deps %}
     <p>The unported dependencies are</p>
     <ul>
@@ -111,6 +114,14 @@ if (range != null) {
             <li><a href="{{ site_url }}/file/{{d.mathlib3_import|join('/')}}"><code>{{d.mathlib3_import|join('.')}}</code></a></li>
         {% endfor %}
     </ul>
+    <details>
+        <summary>Show graph</summary>
+        <svg id="graph"></svg>
+    </details>
+    <script>
+    const data = {{graph.subgraph(unported_deps | map(attribute='mathlib3_import') | map('join', '.')).edges() | list | tojson}};
+    make_graph(document.getElementById('graph'), data);
+    </script>
 {%else%}
 <p>All dependencies are ported!</p>
 {%endif%}
