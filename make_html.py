@@ -279,6 +279,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             data=get_data(),
         ))
 
-make_index(template_env, build_dir / 'html')
-make_out_of_sync(template_env, build_dir / 'html', mathlib_dir)
-make_old_html.make_old(template_env, build_dir / 'html', mathlib_dir)
+if __name__ == "__main__":
+    make_index(template_env, build_dir / 'html')
+    make_out_of_sync(template_env, build_dir / 'html', mathlib_dir)
+    make_old_html.make_old(template_env, build_dir / 'html', mathlib_dir)
