@@ -1,13 +1,13 @@
 // from https://codepen.io/brinkbot/pen/oNZJXqK
 function make_graph(svgNode, data){
   const dag = d3.dagConnect()(data);
-  const nodeHeight = 20;
-  const charWidth = 10;
+  const nodeHeight = 24;
+  const charWidth = 9.5;
   const nodeMargin = 30;
   const layout = d3
     .sugiyama() // base layout
     // .decross(d3.decrossOpt()) // minimize number of crossings
-    .nodeSize((node) => node ? [node.data.id.length * charWidth + nodeMargin * 2, nodeHeight + nodeMargin * 2] : [nodeHeight, nodeHeight]); // set node size
+    .nodeSize((node) => node ? [node.data.id.length * charWidth + nodeMargin, nodeHeight + nodeMargin] : [nodeMargin, nodeMargin]); // set node size
   const { width, height } = layout(dag);
 
 
@@ -78,7 +78,9 @@ function make_graph(svgNode, data){
     .selectAll("g")
     .data(dag.descendants())
     .enter()
-    .append("g")
+    .append("a")
+    .style("text-decoration", "none")
+    .attr("href", d => "file/" + d.data.id.replace(/\./g, "/"))
     .attr("transform", ({ x, y }) => `translate(${x}, ${y})`);
 
   const nodeMaskRoot = rootSelection.append("mask").attr('id', 'nodeMask');
@@ -101,6 +103,7 @@ function make_graph(svgNode, data){
     .attr("width", (n) => charWidth*n.data.id.length)
     .attr("y", -nodeHeight/2)
     .attr("height", nodeHeight)
+    .attr("rx", "0.375rem")
     .attr("fill", (n) => d3.color(colorMap.get(n.data.id)).copy({opacity: 0.5}));
 
   nodeMask
@@ -109,6 +112,7 @@ function make_graph(svgNode, data){
     .attr("width", (n) => charWidth*n.data.id.length)
     .attr("y", -nodeHeight/2)
     .attr("height", nodeHeight)
+    .attr("rx", "0.375rem")
     .attr("fill", "black");
 
   // Add text to nodes
