@@ -108,13 +108,7 @@ if (range != null) {
 {{ progress.bars([data] + data.dependencies) }}
 {% set unported_deps = ([data] + data.dependencies)|rejectattr("state", "equalto", PortState.PORTED)|list%}
 {% if unported_deps %}
-    <p>The unported dependencies are</p>
-    <ul>
-        {% for d in unported_deps %}
-            <li><a href="{{ site_url }}/file/{{d.mathlib3_import|join('/')}}"><code>{{d.mathlib3_import|join('.')}}</code></a></li>
-        {% endfor %}
-    </ul>
-    <details>
+    <details style="margin-bottom: 1em">
         <summary>Show graph</summary>
         <svg id="graph"></svg>
     </details>
@@ -129,6 +123,12 @@ if (range != null) {
         } 
     })
     </script>
+    <p>The unported dependencies are</p>
+    <ul>
+        {% for d in unported_deps %}
+            <li><a href="{{ site_url }}/file/{{d.mathlib3_import|join('/')}}"><code>{{d.mathlib3_import|join('.')}}</code></a></li>
+        {% endfor %}
+    </ul>
 {%else%}
 <p>All dependencies are ported!</p>
 {%endif%}

@@ -42,6 +42,7 @@ function make_graph(svgNode, data){
   // Plot edges
   rootSelection
     .append("g")
+    .attr("mask", "url(#nodeMask)")
     .selectAll("path")
     .data(dag.links())
     .enter()
@@ -80,14 +81,35 @@ function make_graph(svgNode, data){
     .append("g")
     .attr("transform", ({ x, y }) => `translate(${x}, ${y})`);
 
-  // Plot node circles
+  const nodeMaskRoot = rootSelection.append("mask").attr('id', 'nodeMask');
+  nodeMaskRoot.append("rect")
+    .attr("width", "100%")
+    .attr("height", "100%")
+    .attr("fill", "white");
+  const nodeMask = nodeMaskRoot
+    .append("g")
+    .selectAll("g")
+    .data(dag.descendants())
+    .enter()
+    .append("g")
+    .attr("transform", ({ x, y }) => `translate(${x}, ${y})`);
+
+  // Plot node boces
   nodes
     .append("rect")
     .attr("x", (n) => -charWidth*n.data.id.length / 2)
     .attr("width", (n) => charWidth*n.data.id.length)
     .attr("y", -nodeHeight/2)
     .attr("height", nodeHeight)
-    .attr("fill", (n) => colorMap.get(n.data.id));
+    .attr("fill", (n) => d3.color(colorMap.get(n.data.id)).copy({opacity: 0.5}));
+
+  nodeMask
+    .append("rect")
+    .attr("x", (n) => -charWidth*n.data.id.length / 2)
+    .attr("width", (n) => charWidth*n.data.id.length)
+    .attr("y", -nodeHeight/2)
+    .attr("height", nodeHeight)
+    .attr("fill", "black");
 
   // Add text to nodes
   nodes
@@ -96,5 +118,5 @@ function make_graph(svgNode, data){
     .attr("class", "font-monospace")
     .attr("text-anchor", "middle")
     .attr("alignment-baseline", "middle")
-    .attr("fill", "white");
+    .style("fill", "var(--bs-emphasis-color)");
 }
