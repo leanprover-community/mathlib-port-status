@@ -7,10 +7,17 @@ function make_graph(svgNode, data){
   const layout = d3
     .sugiyama() // base layout
     // .decross(d3.decrossOpt()) // minimize number of crossings
-    .nodeSize((node) => node ? [node.data.id.length * charWidth + nodeMargin * 2, nodeHeight + nodeMargin * 2] : [nodeHeight, nodeHeight]); // set node size 
+    .nodeSize((node) => node ? [node.data.id.length * charWidth + nodeMargin * 2, nodeHeight + nodeMargin * 2] : [nodeHeight, nodeHeight]); // set node size
   const { width, height } = layout(dag);
 
+
   const svgSelection = d3.select(svgNode);
+  let zoom = d3.zoom().on('zoom', handleZoom);
+  function handleZoom(e) {
+    svgSelection.selectAll("g").attr('transform', e.transform);
+  }
+
+  svgSelection.call(zoom);
   // svgSelection.attr("width", width);
   // svgSelection.attr("height", height);
   svgSelection.attr("viewBox", [0, 0, width, height].join(" "));

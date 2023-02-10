@@ -120,7 +120,14 @@ if (range != null) {
     </details>
     <script>
     const data = {{graph.subgraph(unported_deps | map(attribute='mathlib3_import') | map('join', '.')).edges() | list | tojson}};
-    make_graph(document.getElementById('graph'), data);
+    let svg = document.getElementById('graph');
+    let has_graphed = false;
+    svg.parentElement.addEventListener('toggle', () => {
+        if (svg.parentElement.hasAttribute('open') && !has_graphed) {
+            has_graphed = true;
+            make_graph(svg, data);
+        } 
+    })
     </script>
 {%else%}
 <p>All dependencies are ported!</p>
