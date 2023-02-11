@@ -118,7 +118,7 @@ if (range != null) {
 {% if unported_deps %}
     <details style="margin-bottom: 1em">
         <summary>Show graph</summary>
-        <svg id="graph"></svg>
+        <svg id="graph" style="overflow-x: visible; overflow-y: clip;"></svg>
     </details>
     <script>
     const data = {{graph.subgraph(unported_deps | map(attribute='mathlib3_import') | map('join', '.')).edges() | list | tojson}};
