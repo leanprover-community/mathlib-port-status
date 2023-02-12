@@ -291,7 +291,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                     continue
                 else:
                     break
-            
+
         if not base_commit:
             print(f"no base commit for: {f_import}")
             base_commit = sync_commit
@@ -311,7 +311,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             data[f_import].forward_port = ForwardPortInfo(base_commit, [], ported_commits, "")
 
     for f_import, f_status in port_status.items():
-        path =  (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
+        path = (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
         path.parent.mkdir(exist_ok=True, parents=True)
         with path.open('w') as file_f:
             if f_status.mathlib4_file is None:
