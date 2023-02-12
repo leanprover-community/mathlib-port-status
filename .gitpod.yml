@@ -9,7 +9,7 @@ tasks:
         && sudo apt install gh -y
 
       pip install -r requirements.txt
-      (mkdir -p build/repos && cd build/repos && git clone https://github.com/leanprover-community/mathlib)
+      (mkdir -p build/repos && cd build/repos && git clone https://github.com/leanprover-community/mathlib && git clone https://github.com/leanprover-community/mathlib4)
     command: |
       python make_html.py
       cd build/html && python -m http.server

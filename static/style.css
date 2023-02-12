@@ -25,3 +25,7 @@
     --bs-table-active-color: var(--bs-warning-text);
     --bs-table-hover-color: var(--bs-warning-text);
 }
+
+summary {
+    margin-bottom: 1em;
+}

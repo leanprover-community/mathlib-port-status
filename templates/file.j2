@@ -103,11 +103,45 @@ if (range != null) {
 <pre><code class="lang-markdown" style="white-space: pre-wrap">* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{data.forward_port.commits[0].hexsha}}`]({{site_url}}/file/{{mathlib3_import|join('/')}}?range={{data.status.source.commit}}..{{data.forward_port.commits[0].hexsha}})
 </code></pre>
 <p>If they exist, also link to any forward-port PRs that already forward-ported it.</p>
+<h3>Changes in mathlib4</h3>
+<p>The following lists the changes that have been made in mathlib4 since this file was first ported. Some of these may be forward-ports.</p>
+<div>
+    <div class="row">
+        <div class="col-1 fw-bold">mathlib3</div>
+        <div class="col-10"></div>
+        <div class="col-1 fw-bold">mathlib4</div>
+    </div>
+    {%- for h in data.mathlib4_history %}
+        {% set msg = h.commit.message.strip().split('\n', 1) %}
+        <div class="row">
+            <div class="col-1">{{h.source | link_sha}}</div>
+            <div class="col-10">
+                {% if msg|length > 1 %}
+                    <details>
+                        <summary><span class="fw-semibold">{{msg[0] | htmlify_comment(default_repo="leanprover-community/mathlib4")}}</span></summary>
+                        {{msg[1] | htmlify_text(default_repo="leanprover-community/mathlib4")}}
+                    </details>
+                {% else %}
+                    <p class="fw-semibold">{{msg[0] | htmlify_comment(default_repo="leanprover-community/mathlib4")}}</p>
+                {% endif %}
+            </div>
+            <div class="col-1">{{h.commit | link_sha}}</div>
+            {% if not h.diff.new_file %}
+                <div class="col-10 offset-1">
+                    <details>
+                        <summary>Diff</summary>
+                        <pre><code class="language-diff">{{ h.diff.diff.decode('utf8') }}</code></pre>
+                    </details>
+                </div>
+            {% endif %}
+        </div>
+    {%- endfor %}
+</div>
 {% endif %}
 {% endif %}
 
 {% set parts = data.dep_counts %}
-<h2>Dependencies <small>
+<h2 id="dependencies">Dependencies <small>
     {%- set plus = joiner(" + ") %}
     {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
     {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}

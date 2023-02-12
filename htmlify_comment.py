@@ -3,7 +3,7 @@ from markupsafe import Markup
 from typing import Optional
 import pycmarkgfm
 
-def htmlify_text(s: Optional[str]) -> Markup:
+def htmlify_text(s: Optional[str], default_repo='leanprover-community/mathlib') -> Markup:
     """Add links to a comment from the yaml file"""
 
     if s is None:
@@ -17,7 +17,7 @@ def htmlify_text(s: Optional[str]) -> Markup:
                 'mathlib4': 'leanprover-community/mathlib4',
                 'mathlib': 'leanprover-community/mathlib',
                 'mathlib3': 'leanprover-community/mathlib',
-                '': 'leanprover-community/mathlib',
+                '': default_repo,
                 'lean4': 'leanprover/lean4',
                 'lean': 'leanprover-community/lean',
             }.get(repo, repo)
@@ -34,7 +34,7 @@ def htmlify_text(s: Optional[str]) -> Markup:
         repl_func, s)
     return Markup(pycmarkgfm.gfm_to_html(hacked_links))
 
-def htmlify_comment(s: Optional[str]) -> Markup:
-    m = htmlify_text(s)
+def htmlify_comment(s: Optional[str], **kwargs) -> Markup:
+    m = htmlify_text(s, **kwargs)
     m = re.sub(r'^<p>(.*)</p>', r'\1', str(m))
     return Markup(m)

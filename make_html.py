@@ -22,7 +22,7 @@ import yaml
 import make_old_html
 import port_status_yaml
 from htmlify_comment import htmlify_comment, htmlify_text
-
+from get_mathlib4_history import get_mathlib4_history, FileHistoryEntry
 
 github_token = os.environ.get("GITHUB_TOKEN")
 
@@ -120,6 +120,7 @@ class Mathlib3FileData:
     dependents: Optional[List['Mathlib3FileData']] = None
     dependencies: Optional[List['Mathlib3FileData']] = None
     forward_port: Optional[ForwardPortInfo] = None
+    mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
     @functools.cached_property
     def state(self):
@@ -166,7 +167,7 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) ->
             raise RuntimeError(f"Unrecognized repo {url}")
         sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
     return Markup(
-        '<a href="https://github.com/{repo}/commits/{sha}">{short_sha}</a>'
+        '<a href="https://github.com/{repo}/commit/{sha}">{short_sha}</a>'
     ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8])
 
 port_status = port_status_yaml.load()
@@ -184,6 +185,7 @@ template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
+mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 
 graph = parse_imports(mathlib_dir / 'src')
 graph = nx.transitive_reduction(graph)
@@ -218,6 +220,12 @@ def get_data():
                 data[k] for k in nx.ancestors(graph, f_import) if k in data
             ]
             graph.nodes[f_import]["data"] = f_data
+
+
+    history = get_mathlib4_history(git.Repo(mathlib4_dir))
+    for f_import, f_data in data.items():
+        f_data.mathlib4_history = history.get(f_import, [])
+
     return data
 
 def make_index(env, html_root):
