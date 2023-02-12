@@ -151,7 +151,6 @@ class Mathlib3FileData:
     def dep_graph_data(self) -> Tuple[List[Tuple[str, str]], Dict[str, PortState]]:
         unported_deps = [self] + [d for d in self.dependencies if d.state !=  PortState.PORTED]
         unported_deps_names = {'.'.join(d.mathlib3_import) for d in unported_deps}
-        unported_deps_names = unported_deps_names | nx.node_boundary(nx.reverse(graph.copy(True), copy=False), unported_deps_names)
         g = graph.subgraph(unported_deps_names)
         node_data = {n: d["data"].state.value for (n, d) in g.nodes().items() if "data" in d}
         return list(g.edges()), node_data

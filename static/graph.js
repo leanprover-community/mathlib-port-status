@@ -20,17 +20,8 @@ function make_graph(svgNode, edgeData, nodeData){
 
   svgSelection.call(zoom);
   // svgSelection.attr("width", width);
-  // svgSelection.attr("height", height);
+  svgSelection.attr("height", height);
   svgSelection.attr("viewBox", [0, 0, width, height].join(" "));
-  const defs = svgSelection.append("defs"); // For gradients
-
-  const steps = dag.size();
-  const interp = d3.interpolateRainbow;
-  const colorMap = new Map();
-  let i = 0;
-  for (const node of dag.idescendants()) {
-    colorMap.set(node.data.id, interp(i++ / steps));
-  }
 
   // How to draw edges
   const line = d3
@@ -40,7 +31,7 @@ function make_graph(svgNode, edgeData, nodeData){
     .y((d) => d.y);
 
   // Plot edges
-  rootSelection
+  const edges = rootSelection
     .append("g")
     .attr("mask", "url(#nodeMask)")
     .selectAll("path")
@@ -50,27 +41,7 @@ function make_graph(svgNode, edgeData, nodeData){
     .attr("d", ({ points }) => line(points))
     .attr("fill", "none")
     .attr("stroke-width", 3)
-    .attr("stroke", ({ source, target }) => {
-      // encodeURIComponents for spaces, hope id doesn't have a `--` in it
-      const gradId = encodeURIComponent(`${source.data.id}--${target.data.id}`);
-      const grad = defs
-        .append("linearGradient")
-        .attr("id", gradId)
-        .attr("gradientUnits", "userSpaceOnUse")
-        .attr("x1", source.x)
-        .attr("x2", target.x)
-        .attr("y1", source.y)
-        .attr("y2", target.y);
-      grad
-        .append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", colorMap.get(source.data.id));
-      grad
-        .append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", colorMap.get(target.data.id));
-      return `url(#${gradId})`;
-    });
+    .style("stroke", "var(--bs-tertiary-color)");
 
   // Select nodes
   const nodes = rootSelection
@@ -114,8 +85,68 @@ function make_graph(svgNode, edgeData, nodeData){
     .attr("fill", (n) =>
       n.data.state == 'PORTED' ? "var(--bs-success-bg-subtle)" :
       n.data.state == 'IN_PROGRESS' ? "var(--bs-warning-bg-subtle)" :
-      d3.color(colorMap.get(n.data.id)).copy({opacity: 0.25}))
-    .style("stroke", n => d3.color(colorMap.get(n.data.id)))
+      "var(--bs-tertiary-bg)")
+    .style("stroke", (n) =>
+      n.data.state == 'PORTED' ? "var(--bs-success-border-subtle)" :
+      n.data.state == 'IN_PROGRESS' ? "var(--bs-warning-border-subtle)" :
+      "var(--bs-tertiary-color)");
+  nodes
+    .each(function(n) {
+      svgNode.addEventListener('importset', e => {
+        let which = e.detail;
+        if (which.target == null) {
+          d3.select(this).transition().duration(250).style('opacity', '1');
+        }
+        else if (which.descendants.includes(n)) {
+          d3.select(this).transition().duration(250).style('opacity', '1');
+        }
+        else if (n.descendants().includes(which.target)) {
+          d3.select(this).transition().duration(250).style('opacity', '1');
+        }
+        else {
+          d3.select(this).transition().duration(250).style('opacity', '0.25');
+        }
+      })
+    });
+  edges
+    .each(function(n) {
+      svgNode.addEventListener('importset', e => {
+        let which = e.detail;
+        if (which.target == null) {
+          d3.select(this).transition().duration(250).style('opacity', '1');
+        }
+        else if (which.descendants.includes(n.target) && which.descendants.includes(n.source)) {
+          d3.select(this).transition().duration(250).style('opacity', '1');
+        }
+        else if (n.target.descendants().includes(which.target)) {
+          d3.select(this).transition().duration(250).style('opacity', '1');
+        }
+        else {
+          d3.select(this).transition().duration(250).style('opacity', '0.25');
+        }
+      })
+    });
+
+  nodes.on('mouseenter', function(e, n) {
+    svgSelection.dispatch('importset', {detail:
+      {target: n, descendants: n.descendants() }
+    });
+  })
+  nodes.on('mouseleave', function(e, n) {
+    svgSelection.dispatch('importset', {detail:
+      {target: null, descendants: []}
+    });
+  })
+  edges.on('mouseenter', function(e, n) {
+    svgSelection.dispatch('importset', {detail:
+      {target: n.source, descendants: n.source.descendants() }
+    });
+  })
+  edges.on('mouseleave', function(e, n) {
+    svgSelection.dispatch('importset', {detail:
+      {target: null, descendants: []}
+    });
+  })
 
   nodeMask
     .append("rect")
@@ -124,7 +155,8 @@ function make_graph(svgNode, edgeData, nodeData){
     .attr("y", -nodeHeight/2)
     .attr("height", nodeHeight)
     .attr("rx", "0.375rem")
-    .attr("fill", "black");
+    .attr("fill", "black")
+    .attr("stroke", "black");
 
   // Add text to nodes
   nodes
