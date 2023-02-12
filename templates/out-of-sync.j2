@@ -27,7 +27,7 @@
 <div class="alert alert-warning">{{ warning }}</div>
 {% endfor %}
 
-{% set needs_sync = data.values() | rejectattr('forward_port', 'none') | list %}
+{% set needs_sync = data.values() | selectattr('forward_port.unported_commits') | list %}
 
 <h1>Possibly out of sync</h1>
 <p>The following {{ needs_sync | length }} files at {{head_sha | link_sha}} have been modified in mathlib3 since the commit at which they were verified.</p>
@@ -90,9 +90,9 @@ $(document).ready(function () {
                 </a>
             </td>
             <td>{{d.status.source | link_sha }}</td>
-            <td data-order="{{d.forward_port.commits | length}}">
+            <td data-order="{{d.forward_port.unported_commits | length}}">
                 <ul>
-                    {%- for c in d.forward_port.commits %}
+                    {%- for c in d.forward_port.unported_commits %}
                         <li>{{c | link_sha}}: {{c.summary | htmlify_comment}}</li>
                     {%- endfor %}
                 </ul>

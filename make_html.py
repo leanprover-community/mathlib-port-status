@@ -95,7 +95,9 @@ class PortState(Enum):
 
 @dataclass
 class ForwardPortInfo:
-    commits: List[git.Commit]
+    base_commit: git.Commit
+    unported_commits: List[git.Commit]
+    ported_commits: List[git.Commit]
     diff_lines: List[str]
 
     @property
@@ -166,9 +168,12 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) ->
         else:
             raise RuntimeError(f"Unrecognized repo {url}")
         sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
-    return Markup(
-        '<a href="https://github.com/{repo}/commit/{sha}">{short_sha}</a>'
-    ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8])
+    if isinstance(sha, port_status_yaml.PortStatusEntry.Source):
+        return Markup(
+            '<a href="https://github.com/{repo}/commit/{sha}">{short_sha}</a>'
+        ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8])
+    else:
+        return Markup('<span title="Unknown">???</span>')
 
 port_status = port_status_yaml.load()
 
@@ -261,22 +266,49 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     data = get_data()
 
     touched = {}
-    for f_import, f_status in port_status.items():
-        if not f_status.source or f_status.source.repo != 'leanprover-community/mathlib':
+    for f_import, f_status in data.items():
+        if not f_status.status.source or f_status.status.source.repo != 'leanprover-community/mathlib':
             continue
         fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
         git_command = ['git',
             'diff', '--exit-code',
             f'--ignore-matching-lines={comment_git_re}',
-            f_status.source.commit + "..HEAD", "--", fname]
+            f_status.status.source.commit + "..HEAD", "--", fname]
         result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
+        try:
+            sync_commit = mathlib_repo.commit(f_status.status.source.commit)
+        except Exception:
+            print(f"invalid sha for: {f_import}")
+            continue
+
+        base_commit = None
+        if f_status.mathlib4_history:
+            # find the first sha that's actually real
+            for h in reversed(f_status.mathlib4_history):
+                try:
+                    base_commit = mathlib_repo.commit(h.source.commit)
+                except Exception:
+                    continue
+                else:
+                    break
+            
+        if not base_commit:
+            print(f"no base commit for: {f_import}")
+            base_commit = sync_commit
+        ported_commits = [
+            c for c in mathlib_repo.iter_commits(f'{base_commit.hexsha}..{sync_commit.hexsha}', fname)
+            if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
+                and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
+        ]
         if result.returncode == 1:
-            commits = [
-                c for c in mathlib_repo.iter_commits(f'{f_status.source.commit}..HEAD', fname)
+            unported_commits = [
+                c for c in mathlib_repo.iter_commits(f'{sync_commit.hexsha}..HEAD', fname)
                 if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
                     and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
             ]
-            data[f_import].forward_port = ForwardPortInfo(commits, result.stdout.splitlines()[4:])
+            data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, result.stdout.splitlines()[4:])
+        else:
+            data[f_import].forward_port = ForwardPortInfo(base_commit, [], ported_commits, "")
 
     for f_import, f_status in port_status.items():
         path =  (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
