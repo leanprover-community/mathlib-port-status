@@ -118,16 +118,19 @@ if (range != null) {
 {% if unported_deps %}
     <details style="margin-bottom: 1em">
         <summary>Show graph</summary>
-        <svg id="graph" style="overflow-x: visible; overflow-y: clip;"></svg>
+        <svg id="graph" style="overflow-x: visible; overflow-y: clip; height: calc(100vh - 56px); width: 100%"></svg>
     </details>
     <script>
-    const data = {{graph.subgraph(unported_deps | map(attribute='mathlib3_import') | map('join', '.')).edges() | list | tojson}};
+    /* {{ data.dep_graph_data }} */
+    {% set edges, nodes = data.dep_graph_data %}
+    const edges = {{edges | tojson}};
+    const nodes = {{nodes | tojson}};
     let svg = document.getElementById('graph');
     let has_graphed = false;
     svg.parentElement.addEventListener('toggle', () => {
         if (svg.parentElement.hasAttribute('open') && !has_graphed) {
             has_graphed = true;
-            make_graph(svg, data);
+            make_graph(svg, edges, nodes);
         }
     })
     </script>

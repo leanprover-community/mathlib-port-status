@@ -147,6 +147,15 @@ class Mathlib3FileData:
         u, i, p = self.dep_counts
         return u*10000*IN_PROGRESS_EQUIV_UNPORTED+i*10000
 
+    @property
+    def dep_graph_data(self) -> Tuple[List[Tuple[str, str]], Dict[str, PortState]]:
+        unported_deps = [self] + [d for d in self.dependencies if d.state !=  PortState.PORTED]
+        unported_deps_names = {'.'.join(d.mathlib3_import) for d in unported_deps}
+        unported_deps_names = unported_deps_names | nx.node_boundary(nx.reverse(graph.copy(True), copy=False), unported_deps_names)
+        g = graph.subgraph(unported_deps_names)
+        node_data = {n: d["data"].state.value for (n, d) in g.nodes().items() if "data" in d}
+        return list(g.edges()), node_data
+
 def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) -> Markup:
     if isinstance(sha, git.Commit):
         url = sha.repo.remotes[0].url
@@ -173,10 +182,12 @@ template_env.filters['htmlify_text'] = htmlify_text
 template_env.filters['link_sha'] = link_sha
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
+template_env.globals['nx'] = nx
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 
 graph = parse_imports(mathlib_dir / 'src')
+graph = nx.transitive_reduction(graph)
 
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
 
@@ -207,6 +218,7 @@ def get_data():
             f_data.dependencies = [
                 data[k] for k in nx.ancestors(graph, f_import) if k in data
             ]
+            graph.nodes[f_import]["data"] = f_data
     return data
 
 def make_index(env, html_root):
@@ -271,7 +283,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                 mathlib3_import=f_import.split('.'),
                 mathlib4_import=mathlib4_import,
                 data=get_data().get(f_import),
-                graph=graph
+                graph=graph,
             ))
 
     with (html_root / 'out-of-sync.html').open('w') as index_f:

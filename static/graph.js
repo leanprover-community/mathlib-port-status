@@ -1,6 +1,6 @@
 // from https://codepen.io/brinkbot/pen/oNZJXqK
-function make_graph(svgNode, data){
-  const dag = d3.dagConnect()(data);
+function make_graph(svgNode, edgeData, nodeData){
+  const dag = d3.dagConnect().nodeDatum(id => ({ id, state: nodeData[id]}))(edgeData);
   const nodeHeight = 24;
   const charWidth = 9.5;
   const nodeMargin = 30;
@@ -98,6 +98,11 @@ function make_graph(svgNode, data){
     .append("g")
     .attr("transform", ({ x, y }) => `translate(${x}, ${y})`);
 
+  nodes
+    .append("title").text((n) =>
+      n.data.state == 'PORTED' ? "ported" :
+      n.data.state == 'IN_PROGRESS' ? "in progress" : null);
+
   // Plot node boces
   nodes
     .append("rect")
@@ -106,7 +111,11 @@ function make_graph(svgNode, data){
     .attr("y", -nodeHeight/2)
     .attr("height", nodeHeight)
     .attr("rx", "0.375rem")
-    .attr("fill", (n) => d3.color(colorMap.get(n.data.id)).copy({opacity: 0.5}));
+    .attr("fill", (n) =>
+      n.data.state == 'PORTED' ? "var(--bs-success-bg-subtle)" :
+      n.data.state == 'IN_PROGRESS' ? "var(--bs-warning-bg-subtle)" :
+      d3.color(colorMap.get(n.data.id)).copy({opacity: 0.25}))
+    .style("stroke", n => d3.color(colorMap.get(n.data.id)))
 
   nodeMask
     .append("rect")
@@ -124,5 +133,8 @@ function make_graph(svgNode, data){
     .attr("class", "font-monospace")
     .attr("text-anchor", "middle")
     .attr("alignment-baseline", "middle")
-    .style("fill", "var(--bs-emphasis-color)");
+    .style("fill", n =>
+      n.data.state == 'PORTED' ? "var(--bs-success-text)" :
+      n.data.state == 'IN_PROGRESS' ? "var(--bs-warning-text)" :
+      "var(--bs-emphasis-color)");
 }
