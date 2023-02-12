@@ -83,7 +83,9 @@ function make_graph(svgNode, data){
     .attr("href", d => "file/" + d.data.id.replace(/\./g, "/"))
     .attr("transform", ({ x, y }) => `translate(${x}, ${y})`);
 
-  const nodeMaskRoot = rootSelection.append("mask").attr('id', 'nodeMask');
+  const nodeMaskRoot = rootSelection.append("mask")
+    .attr('id', 'nodeMask')
+    .attr("maskUnits", "userSpaceOnUse");
   nodeMaskRoot.append("rect")
     .attr("width", "100%")
     .attr("height", "100%")
