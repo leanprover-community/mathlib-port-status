@@ -65,15 +65,17 @@
 {% endif %}
 <script>
 var range = new URLSearchParams(window.location.search).get('range');
+var base = null;
+var head = null;
 if (range != null) {
-    let [base, head] = range.split('..', 2);
+    [base, head] = range.split('..', 2);
     document.currentScript.insertAdjacentElement('beforebegin',
     $('<div>').addClass('alert alert-info').append(
         'You arrived at this page via a link referring to ',
-        $('<code>').text(base),
+        $('<code class="text-danger">').text(base),
         "..",
-        $('<code>').text(head),
-        '. These commits might no longer be shown here!'
+        $('<code class="text-success">').text(head),
+        '. These commits will be highlighted in the same colors below if found!'
     )[0]);
 }
 </script>
@@ -105,7 +107,7 @@ if (range != null) {
 </div>
 <div class="container-fluid">
     <div class="row">
-        <div class="col-lg-6">
+        <div class="col-lg-6 mathlib3-changes">
             <h3>Changes in mathlib3</h3>
             <div>
                 {%- for c, diff in data.forward_port.unported_commits %}
@@ -181,6 +183,27 @@ let setActiveSha = function (s3) {
     cards.removeClass('bg-primary-subtle');
     cards.filter(function () { return $(this).data('mathlib3Sha') == s3 }).addClass('bg-primary-subtle');
 };
+// highlight the active commits.
+$('#forward-port .mathlib3-changes .card').each(function () {
+    let val = $(this).data('mathlib3Sha');
+    if (val == null) {
+        return;
+    }
+    else if (val == head) {
+        $(this)
+            .addClass('border-success')
+            .attr('title', "The linked you followed declared this as the head commit")
+            .find('.card-header')
+            .addClass('bg-success-subtle');
+    }
+    else if (val == base) {
+        $(this)
+            .addClass('border-danger')
+            .find('.card-header')
+            .attr('title', "The linked you followed declared this as the base commit")
+            .addClass('bg-danger-subtle');
+    }
+});
 cards
     .hover(function () {
         setActiveSha($(this).data('mathlib3Sha'));
