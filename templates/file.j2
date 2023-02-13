@@ -211,7 +211,7 @@ if (range != null) {
 {%else%}
 <p>All dependencies are ported!</p>
 {%endif%}
-{% set unsynced_deps = data.dependencies|rejectattr("forward_port", "none")|list%}
+{% set unsynced_deps = data.dependencies|selectattr("forward_port.unported_commits")|list%}
 {% if unsynced_deps %}
     <p>The following {{unsynced_deps | length}} dependencies have changed in mathlib3 since they were ported, which may complicate porting this file</p>
     <ul>
