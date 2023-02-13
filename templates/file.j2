@@ -102,7 +102,7 @@ if (range != null) {
     {%- for c, diff in data.forward_port.unported_commits %}
         <div class="row">
             <div class="col-1">{{c | link_sha}}</div>
-            <div class="col-11 fw-semibold">
+            <div class="col-11">
                 {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
             </div>
         </div>
@@ -116,7 +116,7 @@ if (range != null) {
         <div class="row text-muted">
             <div class="col-1">
                 {% if data.status.source.commit != c.hexsha %}{{c | link_sha}}{% endif %}</div>
-            <div class="col-11 fw-semibold">
+            <div class="col-11">
                 {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
             </div>
         </div>
@@ -129,8 +129,10 @@ if (range != null) {
     {% endif %}
 </div>
 {% if data.forward_port.unported_commits %}
-<p>The overall diff is</p>
-<pre><code class="language-diff">{{ data.forward_port.diff }}</code></pre>
+<details>
+    <summary>Overall diff</summary>
+    <pre><code class="language-diff">{{ data.forward_port.diff }}</code></pre>
+</details>
 <p>If you forward-port all of these commits, please update the SHA in the file header to <code>{{data.forward_port.unported_commits[0][0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers as shown:</p>
 <pre><code class="lang-markdown" style="white-space: pre-wrap">* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{data.forward_port.unported_commits[0][0].hexsha}}`]({{site_url}}/file/{{mathlib3_import|join('/')}}?range={{data.status.source.commit}}..{{data.forward_port.unported_commits[0][0].hexsha}})
 </code></pre>
