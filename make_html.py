@@ -278,8 +278,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
         try:
             sync_commit = mathlib_repo.commit(f_status.status.source.commit)
         except Exception:
-            print(f"invalid sha for: {f_import}")
-            continue
+            sync_commit = None
 
         base_commit = None
         if f_status.mathlib4_history:
@@ -292,9 +291,16 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                 else:
                     break
 
-        if not base_commit:
+        if not base_commit and sync_commit:
             print(f"no base commit for: {f_import}")
             base_commit = sync_commit
+        elif not sync_commit and base_commit:
+            print(f"no sync commit for: {f_import}")
+            sync_commit = base_commit
+        elif not sync_commit and not base_commit:
+            print(f"no commits at all for: {f_import}")
+            continue
+
         ported_commits = [
             c for c in mathlib_repo.iter_commits(f'{base_commit.hexsha}..{sync_commit.hexsha}', fname)
             if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
