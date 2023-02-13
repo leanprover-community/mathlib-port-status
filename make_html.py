@@ -168,12 +168,34 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) ->
         else:
             raise RuntimeError(f"Unrecognized repo {url}")
         sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
+        valid = True
+    else:
+        known_sources = {
+            'leanprover-community/mathlib': mathlib_dir,
+            'leanprover-community/mathlib4': mathlib4_dir,
+        }
+        try:
+            repo_path = known_sources.get(sha.repo)
+        except KeyError:
+            valid = True
+        else:
+            repo = git.Repo(repo_path)
+            try:
+                repo.commit(sha.commit)
+            except ValueError:
+                valid = False
+            else:
+                valid = True
+
     if isinstance(sha, port_status_yaml.PortStatusEntry.Source):
         return Markup(
-            '<a href="https://github.com/{repo}/commit/{sha}">{short_sha}</a>'
-        ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8])
+            '<a href="https://github.com/{repo}/commit/{sha}"' +
+                (' class="text-danger" title="commit does not seem to exist!"' if not valid else '') +
+                '>{short_sha}</a>'
+        ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8],
+            extra=' class="text-danger" title="commit does not seem to exist!"' if not valid else '')
     else:
-        return Markup('<span title="Unknown">???</span>')
+        return Markup('<span title="Unknown" class="text-danger">???</span>')
 
 port_status = port_status_yaml.load()
 
@@ -306,15 +328,15 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
                 and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
         ]
+        unported_commits = [
+            c for c in mathlib_repo.iter_commits(f'{sync_commit.hexsha}..HEAD', fname)
+            if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
+                and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
+        ]
         if result.returncode == 1:
-            unported_commits = [
-                c for c in mathlib_repo.iter_commits(f'{sync_commit.hexsha}..HEAD', fname)
-                if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
-                    and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
-            ]
             data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, result.stdout.splitlines()[4:])
         else:
-            data[f_import].forward_port = ForwardPortInfo(base_commit, [], ported_commits, "")
+            data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, "")
 
     for f_import, f_status in port_status.items():
         path = (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
