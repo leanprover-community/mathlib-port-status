@@ -14,6 +14,14 @@ function setTheme(themeName) {
 setTheme(getTheme())
 
 $(document).ready(function () {
+    // also check to see if the user changes their theme settings while the page is loaded.
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        setTheme(getTheme());
+    })
+
+    window.addEventListener('storage', (event) => setTheme(getTheme()));
+
+    // TODO: this doesn't belong here
     let tables = $('.main-table').DataTable({
         // the default, but no search
         dom: "<'row'<'col-sm-12 col-md-6'l>>" +
@@ -24,25 +32,20 @@ $(document).ready(function () {
         ]
     });
 
-    let params = new URLSearchParams(location.search);
-    let initial_search = params.get('q') || '';
-    $('#search-input')[0].value = initial_search;
-    tables.search(initial_search).draw();
-
-    $('#search-input').on('search', function(e) {
-        tables.search(this.value).draw();
-        const params = new URLSearchParams(location.search);
-        params.set('q', this.value);
-        window.history.replaceState({}, '',
-            location.hash ? `${location.pathname}?${params.toString()}#${location.hash}`
-                          : `${location.pathname}?${params.toString()}`);
-        e.preventDefault();
-    });
-
-    // also check to see if the user changes their theme settings while the page is loaded.
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-        setTheme(getTheme());
-    })
-
-    window.addEventListener('storage', (event) => setTheme(getTheme()));
+    let search_box = $('#search-input');
+    if (search_box) {
+        let params = new URLSearchParams(location.search);
+        let initial_search = params.get('q') || '';
+        search_box[0].value = initial_search;
+        tables.search(initial_search).draw();
+        search_box.on('search', function(e) {
+            tables.search(this.value).draw();
+            const params = new URLSearchParams(location.search);
+            params.set('q', this.value);
+            window.history.replaceState({}, '',
+                location.hash ? `${location.pathname}?${params.toString()}#${location.hash}`
+                            : `${location.pathname}?${params.toString()}`);
+            e.preventDefault();
+        });
+    }
 });
