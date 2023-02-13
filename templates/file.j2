@@ -118,7 +118,7 @@ if (range != null) {
                         </div>
                     </div>
                 {%- endfor %}
-                {% if not data.forward_port.ported_commits or data.forward_port.ported_commits[0].hexsha != data.status.source.commit %}
+                {% if not data.forward_port.ported_commits or data.forward_port.ported_commits[0][0].hexsha != data.status.source.commit %}
                     <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ data.status.source.commit }}">
                         <div class="card-header">{{data.status.source | link_sha}}</div>
                         <div class="card-body">
