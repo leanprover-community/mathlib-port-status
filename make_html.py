@@ -96,8 +96,8 @@ class PortState(Enum):
 @dataclass
 class ForwardPortInfo:
     base_commit: git.Commit
-    unported_commits: List[git.Commit]
-    ported_commits: List[git.Commit]
+    unported_commits: List[Tuple[git.Commit, git.Diff]]
+    ported_commits: List[Tuple[git.Commit, git.Diff]]
     diff_lines: List[str]
 
     @property
@@ -292,11 +292,6 @@ def make_out_of_sync(env, html_root, mathlib_dir):
         if not f_status.status.source or f_status.status.source.repo != 'leanprover-community/mathlib':
             continue
         fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
-        git_command = ['git',
-            'diff', '--exit-code',
-            f'--ignore-matching-lines={comment_git_re}',
-            f_status.status.source.commit + "..HEAD", "--", fname]
-        result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
         try:
             sync_commit = mathlib_repo.commit(f_status.status.source.commit)
         except Exception:
@@ -323,16 +318,35 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             print(f"no commits at all for: {f_import}")
             continue
 
-        ported_commits = [
-            c for c in mathlib_repo.iter_commits(f'{base_commit.hexsha}..{sync_commit.hexsha}', fname)
-            if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
-                and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
-        ]
-        unported_commits = [
-            c for c in mathlib_repo.iter_commits(f'{sync_commit.hexsha}..HEAD', fname)
-            if not c.summary.startswith('chore(*): add mathlib4 synchronization comments')
-                and c.hexsha != '448144f7ae193a8990cb7473c9e9a01990f64ac7'
-        ]
+        git_command = ['git',
+            'diff', '--exit-code',
+            f'--ignore-matching-lines={comment_git_re}',
+            sync_commit.hexsha + "..HEAD", "--", fname]
+        result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
+
+        def is_uninteresting_commit(c):
+            if c.summary.startswith('chore(*): add mathlib4 synchronization comments'):
+                return True
+            elif c.hexsha == '448144f7ae193a8990cb7473c9e9a01990f64ac7':
+                return True
+            else:
+                return False
+
+        ported_commits = []
+        unported_commits = []
+        last = base_commit
+        for c in mathlib_repo.iter_commits(f'{base_commit.hexsha}..{sync_commit.hexsha}', fname,
+                reverse=True):
+            if not is_uninteresting_commit(c):
+                diff, = last.diff(c, paths=fname, create_patch=True)
+                ported_commits.insert(0, (c, diff))
+            last = c
+        for c in mathlib_repo.iter_commits(f'{sync_commit.hexsha}..HEAD', fname,
+                reverse=True):
+            if not is_uninteresting_commit(c):
+                diff, = last.diff(c, paths=fname, create_patch=True)
+                unported_commits.insert(0, (c, diff))
+            last = c
         if result.returncode == 1:
             data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, result.stdout.splitlines()[4:])
         else:

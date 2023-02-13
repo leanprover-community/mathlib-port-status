@@ -92,7 +92,7 @@ $(document).ready(function () {
             <td>{{d.status.source | link_sha }}</td>
             <td data-order="{{d.forward_port.unported_commits | length}}">
                 <ul>
-                    {%- for c in d.forward_port.unported_commits %}
+                    {%- for c, diff in d.forward_port.unported_commits %}
                         <li>{{c | link_sha}}: {{c.summary | htmlify_comment}}</li>
                     {%- endfor %}
                 </ul>

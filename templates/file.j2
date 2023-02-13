@@ -77,34 +77,48 @@ if (range != null) {
     )[0]);
 }
 </script>
+{% macro commit_details(commit, diff, default_repo) %}
+    {% set msg = commit.message.split('\n', 1) %}
+    {% if msg|length > 1 %}
+        <details>
+            <summary><span class="fw-semibold">{{msg[0] | htmlify_comment(default_repo=default_repo)}}</span></summary>
+            {{msg[1] | htmlify_text(default_repo=default_repo)}}
+        </details>
+    {% else %}
+        <p class="fw-semibold">{{msg[0] | htmlify_comment(default_repo=default_repo)}}</p>
+    {% endif %}
+    {% if not diff.new_file %}
+        <details>
+            <summary>Diff</summary>
+            <pre><code class="language-diff">{{ diff.diff.decode('utf8') }}</code></pre>
+        </details>
+    {% endif %}
+{% endmacro %}
+
 {% if data.forward_port is not none %}
-{% set (added, removed) = data.forward_port.diff_stat %}
 <h2 id="forward-port">Changes since the initial port</h2>
 <p>The most recent change is shown first.</p>
 <div>
-    {%- for c in data.forward_port.unported_commits %}
-        {% set msg = c.message.split('\n', 1) %}
+    {%- for c, diff in data.forward_port.unported_commits %}
         <div class="row">
             <div class="col-1">{{c | link_sha}}</div>
-            <div class="col-11 fw-semibold"><p>{{msg[0] | htmlify_comment}}</p></div>
-            {% if msg|length > 1 %}
-                <div class="col-11 offset-1">{{msg[1] | htmlify_text}}</div>
-            {% endif %}
+            <div class="col-11 fw-semibold">
+                {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
+            </div>
         </div>
     {%- endfor %}
     <div class="row">
         <div class="col-1">{{data.status.source | link_sha}}</div>
         <div class="col-11 text-muted"><p>(last sync)</p></div>
     </div>
-    {%- for c in data.forward_port.ported_commits %}
+    {%- for c, diff in data.forward_port.ported_commits %}
         {% set msg = c.message.split('\n', 1) %}
         <div class="row text-muted">
             <div class="col-1">
                 {% if data.status.source.commit != c.hexsha %}{{c | link_sha}}{% endif %}</div>
-            <div class="col-11 fw-semibold"><p>{{msg[0] | htmlify_comment}}</p></div>
-            {% if msg|length > 1 %}
-                <div class="col-11 offset-1">{{msg[1] | htmlify_text}}</div>
-            {% endif %}
+            <div class="col-11 fw-semibold">
+                {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
+            </div>
         </div>
     {%- endfor %}
     {% if data.status.source.commit != data.forward_port.base_commit.hexsha %}
@@ -115,11 +129,13 @@ if (range != null) {
     {% endif %}
 </div>
 {% if data.forward_port.unported_commits %}
+<p>The overall diff is</p>
 <pre><code class="language-diff">{{ data.forward_port.diff }}</code></pre>
-<p>After forward-porting this diff, please update the SHA in the file header to <code>{{data.forward_port.unported_commits[0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers as shown:</p>
-<pre><code class="lang-markdown" style="white-space: pre-wrap">* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{data.forward_port.unported_commits[0].hexsha}}`]({{site_url}}/file/{{mathlib3_import|join('/')}}?range={{data.status.source.commit}}..{{data.forward_port.unported_commits[0].hexsha}})
+<p>If you forward-port all of these commits, please update the SHA in the file header to <code>{{data.forward_port.unported_commits[0][0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers as shown:</p>
+<pre><code class="lang-markdown" style="white-space: pre-wrap">* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{data.forward_port.unported_commits[0][0].hexsha}}`]({{site_url}}/file/{{mathlib3_import|join('/')}}?range={{data.status.source.commit}}..{{data.forward_port.unported_commits[0][0].hexsha}})
 </code></pre>
 <p>If they exist, also link to any forward-port PRs that already forward-ported it.</p>
+<p>Do not forward-port a commit from this list without also forward-porting everything below it!</p>
 {% endif %}
 <h3>Changes in mathlib4</h3>
 <p>The following lists the changes that have been made in mathlib4 since this file was first ported. Some of these may be forward-ports.</p>
@@ -130,28 +146,12 @@ if (range != null) {
         <div class="col-1 fw-bold">mathlib4</div>
     </div>
     {%- for h in data.mathlib4_history %}
-        {% set msg = h.commit.message.strip().split('\n', 1) %}
         <div class="row">
             <div class="col-1">{{h.source | link_sha}}</div>
             <div class="col-10">
-                {% if msg|length > 1 %}
-                    <details>
-                        <summary><span class="fw-semibold">{{msg[0] | htmlify_comment(default_repo="leanprover-community/mathlib4")}}</span></summary>
-                        {{msg[1] | htmlify_text(default_repo="leanprover-community/mathlib4")}}
-                    </details>
-                {% else %}
-                    <p class="fw-semibold">{{msg[0] | htmlify_comment(default_repo="leanprover-community/mathlib4")}}</p>
-                {% endif %}
+                {{ commit_details(h.commit, h.diff, default_repo="leanprover-community/mathlib4") }}
             </div>
             <div class="col-1">{{h.commit | link_sha}}</div>
-            {% if not h.diff.new_file %}
-                <div class="col-10 offset-1">
-                    <details>
-                        <summary>Diff</summary>
-                        <pre><code class="language-diff">{{ h.diff.diff.decode('utf8') }}</code></pre>
-                    </details>
-                </div>
-            {% endif %}
         </div>
     {%- endfor %}
 </div>
