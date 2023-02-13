@@ -94,69 +94,84 @@ if (range != null) {
         </details>
     {% endif %}
 {% endmacro %}
-
 {% if data.forward_port is not none %}
-<h2 id="forward-port">Changes since the initial port</h2>
-<p>The most recent change is shown first.</p>
-<div>
-    {%- for c, diff in data.forward_port.unported_commits %}
-        <div class="row">
-            <div class="col-1">{{c | link_sha}}</div>
-            <div class="col-11">
-                {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
-            </div>
-        </div>
-    {%- endfor %}
-    <div class="row">
-        <div class="col-1">{{data.status.source | link_sha}}</div>
-        <div class="col-11 text-muted"><p>(last sync)</p></div>
-    </div>
-    {%- for c, diff in data.forward_port.ported_commits %}
-        {% set msg = c.message.split('\n', 1) %}
-        <div class="row text-muted">
-            <div class="col-1">
-                {% if data.status.source.commit != c.hexsha %}{{c | link_sha}}{% endif %}</div>
-            <div class="col-11">
-                {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
-            </div>
-        </div>
-    {%- endfor %}
-    {% if data.status.source.commit != data.forward_port.base_commit.hexsha %}
-        <div class="row">
-            <div class="col-1">{{data.forward_port.base_commit | link_sha}}</div>
-            <div class="col-11 text-muted"><p>(first ported)</p></div>
-        </div>
-    {% endif %}
 </div>
-{% if data.forward_port.unported_commits %}
-<details>
-    <summary>Overall diff</summary>
-    <pre><code class="language-diff">{{ data.forward_port.diff }}</code></pre>
-</details>
-<p>If you forward-port all of these commits, please update the SHA in the file header to <code>{{data.forward_port.unported_commits[0][0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers as shown:</p>
-<pre><code class="lang-markdown" style="white-space: pre-wrap">* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{data.forward_port.unported_commits[0][0].hexsha}}`]({{site_url}}/file/{{mathlib3_import|join('/')}}?range={{data.status.source.commit}}..{{data.forward_port.unported_commits[0][0].hexsha}})
-</code></pre>
-<p>If they exist, also link to any forward-port PRs that already forward-ported it.</p>
-<p>Do not forward-port a commit from this list without also forward-porting everything below it!</p>
-{% endif %}
-<h3>Changes in mathlib4</h3>
-<p>The following lists the changes that have been made in mathlib4 since this file was first ported. Some of these may be forward-ports.</p>
-<div>
-    <div class="row">
-        <div class="col-1 fw-bold">mathlib3</div>
-        <div class="col-10"></div>
-        <div class="col-1 fw-bold">mathlib4</div>
-    </div>
-    {%- for h in data.mathlib4_history %}
-        <div class="row">
-            <div class="col-1">{{h.source | link_sha}}</div>
-            <div class="col-10">
-                {{ commit_details(h.commit, h.diff, default_repo="leanprover-community/mathlib4") }}
-            </div>
-            <div class="col-1">{{h.commit | link_sha}}</div>
-        </div>
-    {%- endfor %}
+<div style="background-color: var(--bs-tertiary-bg)">
+<div class="container">
+    <h2 id="forward-port">Changes since the initial port</h2>
+    <p>The following section lists changes to this file in mathlib3 and mathlib4 that occured after the initial port. Most recent changes are shown first.</p>
 </div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6">
+            <h3>Changes in mathlib3</h3>
+            <div>
+                {%- for c, diff in data.forward_port.unported_commits %}
+                    <div class="row">
+                        <div class="col-1">{{c | link_sha}}</div>
+                        <div class="col-11">
+                            {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
+                        </div>
+                    </div>
+                {%- endfor %}
+                <div class="row">
+                    <div class="col-1">{{data.status.source | link_sha}}</div>
+                    <div class="col-11 text-muted"><p>(last sync)</p></div>
+                </div>
+                {%- for c, diff in data.forward_port.ported_commits %}
+                    {% set msg = c.message.split('\n', 1) %}
+                    <div class="row text-muted">
+                        <div class="col-1">
+                            {% if data.status.source.commit != c.hexsha %}{{c | link_sha}}{% endif %}</div>
+                        <div class="col-11">
+                            {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
+                        </div>
+                    </div>
+                {%- endfor %}
+                {% if data.status.source.commit != data.forward_port.base_commit.hexsha %}
+                    <div class="row">
+                        <div class="col-1">{{data.forward_port.base_commit | link_sha}}</div>
+                        <div class="col-11 text-muted"><p>(first ported)</p></div>
+                    </div>
+                {% endif %}
+            </div>
+            {% if data.forward_port.unported_commits %}
+                <details>
+                    <summary>Overall diff</summary>
+                    <pre><code class="language-diff">{{ data.forward_port.diff }}</code></pre>
+                </details>
+                <div class="alert alert-info">
+                    <p>If you forward-port all of these commits, please update the SHA in the file header to <code>{{data.forward_port.unported_commits[0][0].hexsha}}</code>, and include a link to this page in the PR description to help reviewers as shown:</p>
+                    <pre><code class="lang-markdown" style="white-space: pre-wrap">* [`{{mathlib3_import|join('.')}}`@`{{data.status.source.commit}}`..`{{data.forward_port.unported_commits[0][0].hexsha}}`]({{site_url}}/file/{{mathlib3_import|join('/')}}?range={{data.status.source.commit}}..{{data.forward_port.unported_commits[0][0].hexsha}})</code></pre>
+                    <p>If they exist, also link to any forward-port PRs that already forward-ported it.</p>
+                    <p>Do not forward-port a commit from this list without also forward-porting everything below it!</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-lg-6">
+            <h3>Changes in mathlib4</h3>
+            <div>
+                <div class="row">
+                    <div class="col-1 fw-bold">mathlib3</div>
+                    <div class="col-10"></div>
+                    <div class="col-1 fw-bold text-right" style="direction: rtl;"><span style="direction: ltr;">mathlib4</span></div>
+                </div>
+                {%- for h in data.mathlib4_history %}
+                    <div class="row">
+                        <div class="col-1">{{h.source | link_sha}}</div>
+                        <div class="col-10">
+                            {{ commit_details(h.commit, h.diff, default_repo="leanprover-community/mathlib4") }}
+                        </div>
+                        <div class="col-1 text-right" style="direction: rtl;">
+                            <span style="direction: ltr;">{{h.commit | link_sha}}</span></div>
+                    </div>
+                {%- endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<div class="container">
 {% endif %}
 
 {% set parts = data.dep_counts %}
