@@ -190,7 +190,8 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) ->
     if isinstance(sha, port_status_yaml.PortStatusEntry.Source):
         return Markup(
             '<a href="https://github.com/{repo}/commit/{sha}"' +
-                (' class="text-danger" title="commit does not seem to exist!"' if not valid else '') +
+                (' class="font-monospace text-danger" title="commit does not seem to exist!"' if not valid else
+                 ' class="font-monospace"') +
                 '>{short_sha}</a>'
         ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8],
             extra=' class="text-danger" title="commit does not seem to exist!"' if not valid else '')

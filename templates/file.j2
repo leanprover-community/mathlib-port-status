@@ -80,15 +80,15 @@ if (range != null) {
 {% macro commit_details(commit, diff, default_repo) %}
     {% set msg = commit.message.split('\n', 1) %}
     {% if msg|length > 1 %}
-        <details>
+        <details class="card-text">
             <summary><span class="fw-semibold">{{msg[0] | htmlify_comment(default_repo=default_repo)}}</span></summary>
             {{msg[1] | htmlify_text(default_repo=default_repo)}}
         </details>
     {% else %}
-        <p class="fw-semibold">{{msg[0] | htmlify_comment(default_repo=default_repo)}}</p>
+        <p class="fw-semibold card-text">{{msg[0] | htmlify_comment(default_repo=default_repo)}}</p>
     {% endif %}
     {% if not diff.new_file %}
-        <details>
+        <details class="card-text">
             <summary>Diff</summary>
             <pre><code class="language-diff">{{ diff.diff.decode('utf8') }}</code></pre>
         </details>
@@ -96,10 +96,12 @@ if (range != null) {
 {% endmacro %}
 {% if data.forward_port is not none %}
 </div>
-<div style="background-color: var(--bs-tertiary-bg)">
+<div style="background-color: var(--bs-tertiary-bg)" id="forward-port">
 <div class="container">
-    <h2 id="forward-port">Changes since the initial port</h2>
-    <p>The following section lists changes to this file in mathlib3 and mathlib4 that occured after the initial port. Most recent changes are shown first.</p>
+    <h2>Changes since the initial port</h2>
+    <p>The following section lists changes to this file in mathlib3 and mathlib4 that occured after the initial port.
+    Most recent changes are shown first.
+    Hovering over a commit will show all commits associated with the same mathlib3 commit.</p>
 </div>
 <div class="container-fluid">
     <div class="row">
@@ -107,31 +109,35 @@ if (range != null) {
             <h3>Changes in mathlib3</h3>
             <div>
                 {%- for c, diff in data.forward_port.unported_commits %}
-                    <div class="row">
-                        <div class="col-1">{{c | link_sha}}</div>
-                        <div class="col-11">
+                    <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ c.hexsha }}">
+                        <div class="card-header">{{c | link_sha}}</div>
+                        <div class="card-body">
                             {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
                         </div>
                     </div>
                 {%- endfor %}
-                <div class="row">
-                    <div class="col-1">{{data.status.source | link_sha}}</div>
-                    <div class="col-11 text-muted"><p>(last sync)</p></div>
-                </div>
+                {% if not data.forward_port.ported_commits or data.forward_port.ported_commits[0].hexsha != data.status.source.commit %}
+                    <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ data.status.source.commit }}">
+                        <div class="card-header">{{data.status.source | link_sha}}</div>
+                        <div class="card-body">
+                            <p class="text-muted card-text">(last sync)</p>
+                        </div>
+                    </div>
+                {% endif %}
                 {%- for c, diff in data.forward_port.ported_commits %}
-                    {% set msg = c.message.split('\n', 1) %}
-                    <div class="row text-muted">
-                        <div class="col-1">
-                            {% if data.status.source.commit != c.hexsha %}{{c | link_sha}}{% endif %}</div>
-                        <div class="col-11">
+                    <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ c.hexsha }}">
+                        <div class="card-header">{{c | link_sha}}</div>
+                        <div class="card-body">
+                            {% if loop.first and data.status.source.commit == c.hexsha %}<p class="text-muted card-text">(last sync)</p>{% endif %}
                             {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
                         </div>
                     </div>
                 {%- endfor %}
                 {% if data.status.source.commit != data.forward_port.base_commit.hexsha %}
-                    <div class="row">
-                        <div class="col-1">{{data.forward_port.base_commit | link_sha}}</div>
-                        <div class="col-11 text-muted"><p>(first ported)</p></div>
+                    <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ data.forward_port.base_commit.hexsha }}">
+                        <div class="card-header">{{data.forward_port.base_commit | link_sha}}</div>
+                        <div class="card-body">
+                            <p class="text-muted card-text">(first ported)</p></div>
                     </div>
                 {% endif %}
             </div>
@@ -157,19 +163,31 @@ if (range != null) {
                     <div class="col-1 fw-bold text-right" style="direction: rtl;"><span style="direction: ltr;">mathlib4</span></div>
                 </div>
                 {%- for h in data.mathlib4_history %}
-                    <div class="row">
-                        <div class="col-1">{{h.source | link_sha}}</div>
-                        <div class="col-10">
+                    <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ h.source.commit }}">
+                        <div class="card-header">{{h.source | link_sha}}</div>
+                        <div class="card-body">
                             {{ commit_details(h.commit, h.diff, default_repo="leanprover-community/mathlib4") }}
                         </div>
-                        <div class="col-1 text-right" style="direction: rtl;">
-                            <span style="direction: ltr;">{{h.commit | link_sha}}</span></div>
+                        <div class="card-footer">{{h.commit | link_sha}}</div>
                     </div>
                 {%- endfor %}
             </div>
         </div>
     </div>
 </div>
+<script>
+let cards = $('#forward-port .card');
+let setActiveSha = function (s3) {
+    cards.removeClass('bg-primary-subtle');
+    cards.filter(function () { return $(this).data('mathlib3Sha') == s3 }).addClass('bg-primary-subtle');
+};
+cards
+    .hover(function () {
+        setActiveSha($(this).data('mathlib3Sha'));
+    }, function() {
+        setActiveSha(null);
+    })
+</script>
 </div>
 <div class="container">
 {% endif %}

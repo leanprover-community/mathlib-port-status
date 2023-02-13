@@ -29,3 +29,32 @@
 summary {
     margin-bottom: 1em;
 }
+
+.card.card-horizontal {
+    flex-direction: row;
+    --bs-card-spacer-x: 0.5rem;
+    --bs-card-spacer-y: 0.5rem;
+    --bs-card-cap-padding-x: 0.5rem;
+    --bs-card-cap-padding-y: 0.5rem;
+}
+.card.card-horizontal .card-header {
+    border-bottom: 0;
+    border-right: var(--bs-card-border-width) solid var(--bs-card-border-color);
+}
+.card.card-horizontal .card-header:first-child {
+    border-radius: var(--bs-card-inner-border-radius) 0 0 var(--bs-card-inner-border-radius);
+}
+.card.card-horizontal .card-footer {
+    border-top: 0;
+    border-left: var(--bs-card-border-width) solid var(--bs-card-border-color);
+}
+.card.card-horizontal .card-footer:last-child {
+    border-radius: 0 var(--bs-card-inner-border-radius) var(--bs-card-inner-border-radius) 0;
+}
+
+details.card-text:last-child:not([open]) > summary {
+    margin-bottom: 0;
+}
+details.card-text:last-child > :last-child {
+    margin-bottom: 0;
+}
