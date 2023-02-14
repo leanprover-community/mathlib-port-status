@@ -382,12 +382,13 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                 mathlib4_import = None
             else:
                 mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
-            file_f.write(env.get_template('file.j2').render(
+            for chunk in env.get_template('file.j2').generate(
                 mathlib3_import=f_import.split('.'),
                 mathlib4_import=mathlib4_import,
                 data=get_data().get(f_import),
                 graph=graph,
-            ))
+            ):
+                file_f.write(chunk)
 
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
