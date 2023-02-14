@@ -1,4 +1,7 @@
 # mathlib-port-status
+
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/leanprover-community/mathlib-port-status)
+
 Tools for managing the status of the port, notably [the web dashboard](https://leanprover-community.github.io/mathlib-port-status/).
 
 ## Architecture
