@@ -44,6 +44,12 @@ jobs:
           repository: leanprover-community/mathlib4
           path: build/repos/mathlib4
           fetch-depth: 0  # TODO: only unshallow `master`
+      - name: Checkout mathlib3port
+        uses: actions/checkout@v3
+        with:
+          repository: leanprover-community/mathlib3port
+          path: build/repos/mathlib3port
+          fetch-depth: 0  # TODO: only unshallow `master`
       - name: Setup Pages
         id: setup-pages
         uses: actions/configure-pages@v2
