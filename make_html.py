@@ -32,6 +32,38 @@ def mathlib4repo():
     return github.Github(github_token).get_repo("leanprover-community/mathlib4")
 
 
+def is_uninteresting_commit(c: git.Commit):
+    if c.summary.startswith('chore(*): add mathlib4 synchronization comments'):
+        return True
+    elif c.hexsha == '448144f7ae193a8990cb7473c9e9a01990f64ac7':
+        return True
+    else:
+        return False
+
+
+def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, fname: str
+        ) -> List[Tuple[git.Commit, Optional[git.Diff]]]:
+    """ Get commits between base_commit and head_commit, with diffs when `fname` is touched """
+    commits = []
+    last = base_commit
+    for c in base_commit.repo.iter_commits(f'{base_commit.hexsha}..{head_commit.hexsha}', fname, reverse=True):
+        # record all the intermediate commits
+        for c_between in base_commit.repo.iter_commits(f'{last.hexsha}..{c.hexsha}^', reverse=True):
+            commits.insert(0, (c_between, None))
+        if is_uninteresting_commit(c):
+            commits.insert(0, (c, None))
+        else:
+            diffs = last.diff(c, paths=fname, create_patch=True)
+            try:
+                diff, = diffs
+            except ValueError:
+                diff = None
+            commits.insert(0, (c, diff))
+        last = c
+    for c_between in base_commit.repo.iter_commits(f'{last.hexsha}..{head_commit.hexsha}^', reverse=True):
+        commits.insert(0, (c_between, None))
+    return commits
+
 @functools.cache
 def github_labels(pr):
     try:
@@ -96,9 +128,17 @@ class PortState(Enum):
 @dataclass
 class ForwardPortInfo:
     base_commit: git.Commit
-    unported_commits: List[Tuple[git.Commit, git.Diff]]
-    ported_commits: List[Tuple[git.Commit, git.Diff]]
+    all_unported_commits: List[Tuple[git.Commit, git.Diff]]
+    all_ported_commits: List[Tuple[git.Commit, git.Diff]]
     diff_lines: List[str]
+
+    @property
+    def ported_commits(self):
+        return [(c, d) for c, d in self.all_ported_commits if d is not None]
+
+    @property
+    def unported_commits(self):
+        return [(c, d) for c, d in self.all_unported_commits if d is not None]
 
     @property
     def diff(self) -> str:
@@ -208,6 +248,7 @@ template_env = jinja2.Environment(loader=template_loader)
 template_env.filters['htmlify_comment'] = htmlify_comment
 template_env.filters['htmlify_text'] = htmlify_text
 template_env.filters['link_sha'] = link_sha
+template_env.filters['set'] = set
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
@@ -325,29 +366,9 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             sync_commit.hexsha + "..HEAD", "--", fname]
         result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
 
-        def is_uninteresting_commit(c):
-            if c.summary.startswith('chore(*): add mathlib4 synchronization comments'):
-                return True
-            elif c.hexsha == '448144f7ae193a8990cb7473c9e9a01990f64ac7':
-                return True
-            else:
-                return False
+        ported_commits = commits_and_diffs_between(base_commit, sync_commit, fname)
+        unported_commits = commits_and_diffs_between(sync_commit, mathlib_repo.head.commit, fname)
 
-        ported_commits = []
-        unported_commits = []
-        last = base_commit
-        for c in mathlib_repo.iter_commits(f'{base_commit.hexsha}..{sync_commit.hexsha}', fname,
-                reverse=True):
-            if not is_uninteresting_commit(c):
-                diff, = last.diff(c, paths=fname, create_patch=True)
-                ported_commits.insert(0, (c, diff))
-            last = c
-        for c in mathlib_repo.iter_commits(f'{sync_commit.hexsha}..HEAD', fname,
-                reverse=True):
-            if not is_uninteresting_commit(c):
-                diff, = last.diff(c, paths=fname, create_patch=True)
-                unported_commits.insert(0, (c, diff))
-            last = c
         if result.returncode == 1:
             data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, result.stdout.splitlines()[4:])
         else:
