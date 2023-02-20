@@ -212,6 +212,18 @@ def get_repo_by_github_name(url: str) -> git.Repo:
 
 
 @functools.cache
+def get_github_name(repo: git.Repo):
+    url = repo.remotes[0].url
+    if url.startswith('https://github.com/'):
+        return url.removeprefix('https://github.com/')
+    elif url.startswith('git@github.com:'):
+        return url.removeprefix('git@github.com:')
+    else:
+        raise RuntimeError(f"Unrecognized repo {url}")
+
+
+
+@functools.cache
 def commit_exists(src: port_status_yaml.PortStatusEntry.Source) -> bool:
     try:
         repo = get_repo_by_github_name(src.repo)
@@ -225,16 +237,9 @@ def commit_exists(src: port_status_yaml.PortStatusEntry.Source) -> bool:
         else:
             return True
 
-
 def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) -> Markup:
     if isinstance(sha, git.Commit):
-        url = sha.repo.remotes[0].url
-        if url.startswith('https://github.com/'):
-            url = url.removeprefix('https://github.com/')
-        elif url.startswith('git@github.com:'):
-            url = url.removeprefix('git@github.com:')
-        else:
-            raise RuntimeError(f"Unrecognized repo {url}")
+        url = get_github_name(sha.repo)
         sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
         valid = True
     else:
