@@ -201,6 +201,31 @@ class Mathlib3FileData:
         node_data = {n: d["data"].state.value for (n, d) in g.nodes().items() if "data" in d}
         return list(g.edges()), node_data
 
+@functools.cache
+def get_repo_by_github_name(url: str) -> git.Repo:
+    if url == 'leanprover-community/mathlib':
+        return git.Repo(mathlib_dir)
+    elif url == 'leanprover-community/mathlib4':
+        return git.Repo(mathlib4_dir)
+    else:
+        raise KeyError(url)
+
+
+@functools.cache
+def commit_exists(src: port_status_yaml.PortStatusEntry.Source) -> bool:
+    try:
+        repo = get_repo_by_github_name(src.repo)
+    except KeyError:
+        return True
+    else:
+        try:
+            repo.commit(src.commit)
+        except ValueError:
+            return False
+        else:
+            return True
+
+
 def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) -> Markup:
     if isinstance(sha, git.Commit):
         url = sha.repo.remotes[0].url
@@ -213,22 +238,7 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) ->
         sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
         valid = True
     else:
-        known_sources = {
-            'leanprover-community/mathlib': mathlib_dir,
-            'leanprover-community/mathlib4': mathlib4_dir,
-        }
-        try:
-            repo_path = known_sources.get(sha.repo)
-        except KeyError:
-            valid = True
-        else:
-            repo = git.Repo(repo_path)
-            try:
-                repo.commit(sha.commit)
-            except ValueError:
-                valid = False
-            else:
-                valid = True
+        valid = commit_exists(sha)
 
     if isinstance(sha, port_status_yaml.PortStatusEntry.Source):
         return Markup(
@@ -269,29 +279,35 @@ shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 @functools.cache
 def get_data():
     data = {}
-    for f_import, f_status in port_status.items():
-        path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
-        try:
-            with path.open('r') as f_src:
-                lines = len(f_src.readlines())
-        except IOError:
-            lines = None
-        data[f_import] = Mathlib3FileData(
-            mathlib3_import=f_import.split('.'),
-            status=f_status,
-            lines=lines,
-            labels=github_labels(f_status.mathlib4_pr) if ((not f_status.ported) and
-                                                            f_status.mathlib4_pr) else []
-        )
-    for f_import, f_data in data.items():
-        if f_import in graph:
-            f_data.dependents = [
-                data[k] for k in nx.descendants(graph, f_import) if k in data
-            ]
-            f_data.dependencies = [
-                data[k] for k in nx.ancestors(graph, f_import) if k in data
-            ]
-            graph.nodes[f_import]["data"] = f_data
+    max_len = max((len(i) for i in port_status), default=0)
+    with tqdm(port_status.items(), desc='getting status information') as pbar:
+        for f_import, f_status in pbar:
+            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
+            path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
+            try:
+                with path.open('r') as f_src:
+                    lines = len(f_src.readlines())
+            except IOError:
+                lines = None
+            data[f_import] = Mathlib3FileData(
+                mathlib3_import=f_import.split('.'),
+                status=f_status,
+                lines=lines,
+                labels=github_labels(f_status.mathlib4_pr) if ((not f_status.ported) and
+                                                                f_status.mathlib4_pr) else []
+            )
+
+    with tqdm(data.items(), desc='building import graph') as pbar:
+        for f_import, f_data in pbar:
+            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
+            if f_import in graph:
+                f_data.dependents = [
+                    data[k] for k in nx.descendants(graph, f_import) if k in data
+                ]
+                f_data.dependencies = [
+                    data[k] for k in nx.ancestors(graph, f_import) if k in data
+                ]
+                graph.nodes[f_import]["data"] = f_data
 
 
     history = get_mathlib4_history(git.Repo(mathlib4_dir))
@@ -335,7 +351,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     max_len = max((len(i) for i in port_status), default=0)
     with tqdm(data.items(), desc='generating mathlib3 diffs') as pbar:
         for f_import, f_status in pbar:
-            pbar.set_postfix_str(f_import.ljust(max_len))
+            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
             if not f_status.status.source or f_status.status.source.repo != 'leanprover-community/mathlib':
                 continue
             fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
@@ -356,13 +372,17 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                         break
 
             if not base_commit and sync_commit:
-                logging.warning(f"no base commit for: {f_import}")
+                # base commit is expected to be missing unless the file is in mathlib4 master
+                if f_status.state == PortState.PORTED:
+                    logging.warning(f"no base commit for: {f_import}")
                 base_commit = sync_commit
             elif not sync_commit and base_commit:
-                logging.warning(f"no sync commit for: {f_import}")
+                if f_status.state != PortState.UNPORTED:
+                    logging.warning(f"no sync commit for: {f_import}")
                 sync_commit = base_commit
             elif not sync_commit and not base_commit:
-                logging.warning(f"no commits at all for: {f_import}")
+                if f_status.state != PortState.UNPORTED:
+                    logging.warning(f"no commits at all for: {f_import} {f_status.state}")
                 continue
 
             git_command = ['git',
@@ -379,9 +399,10 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             else:
                 data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, "")
 
+    file_template = env.get_template('file.j2')
     with tqdm(port_status.items(), desc="generating file pages") as pbar:
         for f_import, f_status in pbar:
-            pbar.set_postfix_str(f_import.ljust(max_len))
+            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
             path = (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
             path.parent.mkdir(exist_ok=True, parents=True)
             with path.open('w') as file_f:
@@ -389,7 +410,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                     mathlib4_import = None
                 else:
                     mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
-                for chunk in env.get_template('file.j2').generate(
+                for chunk in file_template.generate(
                     mathlib3_import=f_import.split('.'),
                     mathlib4_import=mathlib4_import,
                     data=get_data().get(f_import),

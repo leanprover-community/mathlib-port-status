@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import functools
 import hashlib
 import re
+from tqdm import tqdm
+import datetime
 
 import git
 import port_status_yaml
@@ -50,27 +52,31 @@ def _NULL_TREE(repo):
     null_tree_sha = hashlib.sha1(b"tree 0\0").hexdigest()
     return repo.tree(null_tree_sha)
 
+
 def get_mathlib4_history(repo: git.Repo) -> dict[str, list[FileHistoryEntry]]:
     file_history = {}
 
     last = _NULL_TREE(repo)
-    for commit in repo.iter_commits(paths=['Mathlib'], first_parent=True, reverse=True):
-        diffs = last.diff(commit, create_patch=True)
-        last = commit
-        for d in diffs:
-            if d.b_blob is not None:
-                try:
-                    module, r, c = port_info_from_blob(d.b_blob)
-                except ValueError:
-                    continue
-                if module is None:
-                    continue
-                entry = FileHistoryEntry(
-                    module=module,
-                    source=port_status_yaml.PortStatusEntry.Source(repo=r, commit=c),
-                    commit=commit,
-                    diff=d)
-                file_history.setdefault(module, []).insert(0, entry)
+    with tqdm(repo.iter_commits(paths=['Mathlib'], first_parent=True, reverse=True),
+            desc='Getting mathlib4 history') as pbar:
+        for commit in pbar:
+            pbar.set_postfix_str(datetime.datetime.fromtimestamp(commit.committed_date).isoformat(), refresh=False)
+            diffs = last.diff(commit, create_patch=True)
+            last = commit
+            for d in diffs:
+                if d.b_blob is not None:
+                    try:
+                        module, r, c = port_info_from_blob(d.b_blob)
+                    except ValueError:
+                        continue
+                    if module is None:
+                        continue
+                    entry = FileHistoryEntry(
+                        module=module,
+                        source=port_status_yaml.PortStatusEntry.Source(repo=r, commit=c),
+                        commit=commit,
+                        diff=d)
+                    file_history.setdefault(module, []).insert(0, entry)
     
     return file_history
 

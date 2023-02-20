@@ -14,7 +14,7 @@ class PortStatusEntry:
     class Comment:
         message: Optional[str] = None
         should_port: bool = True
-    @dataclass
+    @dataclass(frozen=True)
     class Source:
         repo: str
         commit: str
