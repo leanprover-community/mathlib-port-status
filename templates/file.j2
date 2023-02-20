@@ -246,7 +246,6 @@ cards
         <svg id="graph" style="overflow-x: visible; overflow-y: clip; max-height: calc(100vh - 56px); width: 100%"></svg>
     </details>
     <script>
-    /* {{ data.dep_graph_data }} */
     {% set edges, nodes = data.dep_graph_data %}
     const edges = {{edges | tojson}};
     const nodes = {{nodes | tojson}};
