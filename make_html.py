@@ -9,6 +9,7 @@ import sys
 from typing import Optional, List, Dict, Union, Tuple
 import os
 import warnings
+import logging
 
 import dacite
 import git
@@ -18,11 +19,12 @@ import networkx as nx
 from markupsafe import Markup
 import requests
 import yaml
+from tqdm import tqdm
 
 import make_old_html
 import port_status_yaml
 from htmlify_comment import htmlify_comment, htmlify_text
-from get_mathlib4_history import get_mathlib4_history, FileHistoryEntry
+from get_mathlib4_history import get_history, FileHistoryEntry
 
 github_token = os.environ.get("GITHUB_TOKEN")
 
@@ -163,6 +165,7 @@ class Mathlib3FileData:
     dependencies: Optional[List['Mathlib3FileData']] = None
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
+    mathlib3port_history: List[FileHistoryEntry] = field(default_factory=list)
 
     @functools.cached_property
     def state(self):
@@ -254,6 +257,7 @@ template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
+mathlib3port_dir = build_dir / 'repos' / 'mathlib3port'
 mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 
 graph = parse_imports(mathlib_dir / 'src')
@@ -290,10 +294,15 @@ def get_data():
             ]
             graph.nodes[f_import]["data"] = f_data
 
-
-    history = get_mathlib4_history(git.Repo(mathlib4_dir))
+    history = get_history(git.Repo(mathlib4_dir))
+    def patch_filter(last, current):
+        return False
+        # d = last.diff(current, paths=['upstream-rev'])
+        # return bool(d)
+    port_history = get_history(git.Repo(mathlib3port_dir), root='Mathbin', patch_filter=patch_filter)
     for f_import, f_data in data.items():
         f_data.mathlib4_history = history.get(f_import, [])
+        f_data.mathlib3port_history = port_history.get(f_import, [])
 
     return data
 
@@ -330,7 +339,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     data = get_data()
 
     touched = {}
-    for f_import, f_status in data.items():
+    for f_import, f_status in tqdm(data.items()):
         if not f_status.status.source or f_status.status.source.repo != 'leanprover-community/mathlib':
             continue
         fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
@@ -374,7 +383,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
         else:
             data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, "")
 
-    for f_import, f_status in port_status.items():
+    for f_import, f_status in tqdm(port_status.items()):
         path = (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
         path.parent.mkdir(exist_ok=True, parents=True)
         with path.open('w') as file_f:

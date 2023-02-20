@@ -4,6 +4,7 @@ import hashlib
 import re
 
 import git
+from tqdm import tqdm
 import port_status_yaml
 
 # upstream bug
@@ -50,12 +51,15 @@ def _NULL_TREE(repo):
     null_tree_sha = hashlib.sha1(b"tree 0\0").hexdigest()
     return repo.tree(null_tree_sha)
 
-def get_mathlib4_history(repo: git.Repo) -> dict[str, list[FileHistoryEntry]]:
+def get_history(repo: git.Repo, root='Mathlib', patch_filter=lambda l, c: True) -> dict[str, list[FileHistoryEntry]]:
     file_history = {}
 
     last = _NULL_TREE(repo)
-    for commit in repo.iter_commits(paths=['Mathlib'], first_parent=True, reverse=True):
-        diffs = last.diff(commit, create_patch=True)
+    for commit in tqdm(repo.iter_commits(paths=[root], first_parent=True, reverse=True)):
+        if not patch_filter(last, commit):
+            last = commit
+            continue
+        diffs = last.diff(commit, create_patch=patch_filter(last, commit))
         last = commit
         for d in diffs:
             if d.b_blob is not None:
