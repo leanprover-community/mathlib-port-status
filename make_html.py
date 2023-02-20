@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import functools
 from pathlib import Path
+import logging
 import re
 import shutil
 import subprocess
@@ -20,6 +21,7 @@ from markupsafe import Markup
 import requests
 import yaml
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 import make_old_html
 import port_status_yaml
@@ -338,66 +340,70 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     mathlib_repo = git.Repo(mathlib_dir)
     data = get_data()
 
-    touched = {}
-    for f_import, f_status in tqdm(data.items()):
-        if not f_status.status.source or f_status.status.source.repo != 'leanprover-community/mathlib':
-            continue
-        fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
-        try:
-            sync_commit = mathlib_repo.commit(f_status.status.source.commit)
-        except Exception:
-            sync_commit = None
+    max_len = max((len(i) for i in port_status), default=0)
+    with tqdm(data.items(), desc='generating mathlib3 diffs') as pbar:
+        for f_import, f_status in pbar:
+            pbar.set_postfix_str(f_import.ljust(max_len))
+            if not f_status.status.source or f_status.status.source.repo != 'leanprover-community/mathlib':
+                continue
+            fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
+            try:
+                sync_commit = mathlib_repo.commit(f_status.status.source.commit)
+            except Exception:
+                sync_commit = None
 
-        base_commit = None
-        if f_status.mathlib4_history:
-            # find the first sha that's actually real
-            for h in reversed(f_status.mathlib4_history):
-                try:
-                    base_commit = mathlib_repo.commit(h.source.commit)
-                except Exception:
-                    continue
-                else:
-                    break
+            base_commit = None
+            if f_status.mathlib4_history:
+                # find the first sha that's actually real
+                for h in reversed(f_status.mathlib4_history):
+                    try:
+                        base_commit = mathlib_repo.commit(h.source.commit)
+                    except Exception:
+                        continue
+                    else:
+                        break
 
-        if not base_commit and sync_commit:
-            print(f"no base commit for: {f_import}")
-            base_commit = sync_commit
-        elif not sync_commit and base_commit:
-            print(f"no sync commit for: {f_import}")
-            sync_commit = base_commit
-        elif not sync_commit and not base_commit:
-            print(f"no commits at all for: {f_import}")
-            continue
+            if not base_commit and sync_commit:
+                logging.warning(f"no base commit for: {f_import}")
+                base_commit = sync_commit
+            elif not sync_commit and base_commit:
+                logging.warning(f"no sync commit for: {f_import}")
+                sync_commit = base_commit
+            elif not sync_commit and not base_commit:
+                logging.warning(f"no commits at all for: {f_import}")
+                continue
 
-        git_command = ['git',
-            'diff', '--exit-code',
-            f'--ignore-matching-lines={comment_git_re}',
-            sync_commit.hexsha + "..HEAD", "--", fname]
-        result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
+            git_command = ['git',
+                'diff', '--exit-code',
+                f'--ignore-matching-lines={comment_git_re}',
+                sync_commit.hexsha + "..HEAD", "--", fname]
+            result = subprocess.run(git_command, cwd=mathlib_dir, capture_output=True, encoding='utf8')
 
-        ported_commits = commits_and_diffs_between(base_commit, sync_commit, fname)
-        unported_commits = commits_and_diffs_between(sync_commit, mathlib_repo.head.commit, fname)
+            ported_commits = commits_and_diffs_between(base_commit, sync_commit, fname)
+            unported_commits = commits_and_diffs_between(sync_commit, mathlib_repo.head.commit, fname)
 
-        if result.returncode == 1:
-            data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, result.stdout.splitlines()[4:])
-        else:
-            data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, "")
-
-    for f_import, f_status in tqdm(port_status.items()):
-        path = (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
-        path.parent.mkdir(exist_ok=True, parents=True)
-        with path.open('w') as file_f:
-            if f_status.mathlib4_file is None:
-                mathlib4_import = None
+            if result.returncode == 1:
+                data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, result.stdout.splitlines()[4:])
             else:
-                mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
-            for chunk in env.get_template('file.j2').generate(
-                mathlib3_import=f_import.split('.'),
-                mathlib4_import=mathlib4_import,
-                data=get_data().get(f_import),
-                graph=graph,
-            ):
-                file_f.write(chunk)
+                data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, "")
+
+    with tqdm(port_status.items(), desc="generating file pages") as pbar:
+        for f_import, f_status in pbar:
+            pbar.set_postfix_str(f_import.ljust(max_len))
+            path = (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
+            path.parent.mkdir(exist_ok=True, parents=True)
+            with path.open('w') as file_f:
+                if f_status.mathlib4_file is None:
+                    mathlib4_import = None
+                else:
+                    mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
+                for chunk in env.get_template('file.j2').generate(
+                    mathlib3_import=f_import.split('.'),
+                    mathlib4_import=mathlib4_import,
+                    data=get_data().get(f_import),
+                    graph=graph,
+                ):
+                    file_f.write(chunk)
 
     with (html_root / 'out-of-sync.html').open('w') as index_f:
         index_f.write(env.get_template('out-of-sync.j2').render(
@@ -406,6 +412,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
         ))
 
 if __name__ == "__main__":
-    make_index(template_env, build_dir / 'html')
-    make_out_of_sync(template_env, build_dir / 'html', mathlib_dir)
-    make_old_html.make_old(template_env, build_dir / 'html', mathlib_dir)
+    with logging_redirect_tqdm():
+        make_index(template_env, build_dir / 'html')
+        make_out_of_sync(template_env, build_dir / 'html', mathlib_dir)
+        make_old_html.make_old(template_env, build_dir / 'html', mathlib_dir)
