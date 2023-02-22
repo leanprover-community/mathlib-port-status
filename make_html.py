@@ -168,11 +168,12 @@ class Mathlib3FileData:
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
-    def mathlib4_last_commit_date(self):
+    @functools.cached_property
+    def date_ported(self):
         if len(self.mathlib4_history) == 0:
-            None
+            return None
         else:
-            return time.strftime("%Y-%m-%d", time.gmtime(self.mathlib4_history[0].commit.date_commited))
+            return time.strftime("%Y-%m-%d", time.gmtime(self.mathlib4_history[-1].commit.date_commited))
 
     @functools.cached_property
     def state(self):
