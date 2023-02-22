@@ -164,6 +164,7 @@ class Mathlib3FileData:
     labels: Optional[List[dict[str, str]]]
     dependents: Optional[List['Mathlib3FileData']] = None
     dependencies: Optional[List['Mathlib3FileData']] = None
+    depth: Optional[int] = 0     # `depth` is used for sorting based on the import hierarchy.
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
@@ -277,9 +278,6 @@ mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 graph = parse_imports(mathlib_dir / 'src')
 graph = nx.transitive_reduction(graph)
 
-# Save topological order to sort by lowest file in import chain.
-topol_order = {node : i  for i, node in enumerate(nx.topological_sort(graph))}
-
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
 
 shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
@@ -315,9 +313,11 @@ def get_data():
                 f_data.dependencies = [
                     data[k] for k in nx.ancestors(graph, f_import) if k in data
                 ]
-
-                # Save topological order into data.
-                f_data.topol_order = topol_order[f_import] # graph.nodes[f_import]["topol_order"]
+                # Measure the longest path from the node.
+                # Top-level files that are never imported have depth 0,
+                # all imports of a file have strictly larger depth
+                _g = graph.subgraph(nx.descendants(graph, f_import).union([f_import]))
+                f_data.depth = nx.dag_longest_path_length(_g)
 
                 graph.nodes[f_import]["data"] = f_data
 
