@@ -277,6 +277,9 @@ mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 graph = parse_imports(mathlib_dir / 'src')
 graph = nx.transitive_reduction(graph)
 
+# Save topological order to sort by lowest file in import chain.
+topol_order = {node : i  for i, node in enumerate(nx.topological_sort(graph))}
+
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
 
 shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
@@ -312,6 +315,10 @@ def get_data():
                 f_data.dependencies = [
                     data[k] for k in nx.ancestors(graph, f_import) if k in data
                 ]
+
+                # Save topological order into data.
+                f_data.topol_order = topol_order[f_import] # graph.nodes[f_import]["topol_order"]
+
                 graph.nodes[f_import]["data"] = f_data
 
 
