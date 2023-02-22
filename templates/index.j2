@@ -105,6 +105,7 @@
                 <tr>
                     <th>File</th>
                     <th>commit</th>
+                    <th>date</th>
                     <th>comments</th>
                     <th class="lines-column">lines</th>
                 </tr>
@@ -121,6 +122,7 @@
                             {{f_data.status.source | link_sha}}
                         {%- endif %}
                     </td>
+                    <td>{{f_data.mathlib4_last_commit_date}}</td>
                     <td>{{f_data.status.comment.message | htmlify_comment}}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>

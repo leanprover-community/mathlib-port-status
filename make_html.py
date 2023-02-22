@@ -10,6 +10,7 @@ import sys
 from typing import Optional, List, Dict, Union, Tuple
 import os
 import warnings
+import time
 
 import dacite
 import git
@@ -166,6 +167,12 @@ class Mathlib3FileData:
     dependencies: Optional[List['Mathlib3FileData']] = None
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
+
+    def mathlib4_last_commit_date(self):
+        if len(self.mathlib4_history) == 0:
+            None
+        else:
+            return time.strftime("%Y-%m-%d", time.gmtime(self.mathlib4_history[0].commit.date_commited))
 
     @functools.cached_property
     def state(self):
