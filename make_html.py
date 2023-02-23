@@ -164,7 +164,7 @@ class Mathlib3FileData:
     labels: Optional[List[dict[str, str]]]
     dependents: Optional[List['Mathlib3FileData']] = None
     dependencies: Optional[List['Mathlib3FileData']] = None
-    depth: Optional[int] = 0     # `depth` is used for sorting based on the import hierarchy.
+    depth: int = 0     # `depth` is used for sorting based on the import hierarchy.
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
