@@ -173,7 +173,7 @@ class Mathlib3FileData:
         if not self.mathlib4_history:
             return None
         else:
-            return datetime.datetime.fromtimestamp(self.mathlib4_history[-1].commit.committed_date)
+            return datetime.datetime.fromtimestamp(self.mathlib4_history[-1].commit.committed_date, datetime.timezone.utc)
 
     @functools.cached_property
     def state(self):
