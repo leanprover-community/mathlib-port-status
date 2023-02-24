@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import datetime
 from enum import Enum
 import functools
 from pathlib import Path
@@ -10,7 +11,6 @@ import sys
 from typing import Optional, List, Dict, Union, Tuple
 import os
 import warnings
-import time
 
 import dacite
 import git
@@ -169,11 +169,11 @@ class Mathlib3FileData:
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
     @functools.cached_property
-    def date_ported(self):
-        if len(self.mathlib4_history) == 0:
+    def date_ported(self) -> datetime.datetime:
+        if not self.mathlib4_history:
             return None
         else:
-            return time.strftime("%Y-%m-%d", time.gmtime(self.mathlib4_history[-1].commit.date_commited))
+            return datetime.datetime.fromtimestamp(self.mathlib4_history[-1].commit.committed_date)
 
     @functools.cached_property
     def state(self):

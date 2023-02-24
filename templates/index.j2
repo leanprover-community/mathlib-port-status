@@ -122,7 +122,7 @@
                             {{f_data.status.source | link_sha}}
                         {%- endif %}
                     </td>
-                    <td>{{f_data.date_ported}}</td>
+                    <td>{% if f_data.date_ported is not none %}<time datetime="{{f_data.date_ported.isoformat()}}">{{f_data.date_ported.date().isoformat()}}</time>{% endif %}</td>
                     <td>{{f_data.status.comment.message | htmlify_comment}}</td>
                     <td>{{f_data.lines if f_data.lines}}</td>
                 </tr>
