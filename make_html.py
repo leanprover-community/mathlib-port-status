@@ -93,7 +93,6 @@ def github_labels(pr):
               for label in raw_labels]
     return labels
 
-
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
 
@@ -169,6 +168,14 @@ class Mathlib3FileData:
     dependent_depth: int = 0
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
+    forward_port_prs: Optional[dict] = None
+
+    @functools.cached_property
+    def date_ported(self) -> datetime.datetime:
+        if not self.mathlib4_history:
+            return None
+        else:
+            return datetime.datetime.fromtimestamp(self.mathlib4_history[-1].commit.committed_date, datetime.timezone.utc)
 
     @property
     def mathlib3_file(self) -> Path:
@@ -297,6 +304,28 @@ mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 graph = parse_imports(mathlib_dir / 'src')
 graph = nx.transitive_reduction(graph)
 
+
+@functools.cache
+def get_forward_port_prs():
+
+    # Keys are mathlib4-files and value is a set of PRs that
+    # are open, have label 'mathlib3-pair' and touch this file.
+    forward_port_prs = dict()
+
+    try:
+        pulls = mathlib4repo().get_pulls(state="open")
+        forward_ports = (pr for pr in pulls if 'mathlib3-pair' in (l.name for l in pr.get_labels()))
+        for pr in forward_ports:
+            for file in (f.filename for f in pr.get_files()):
+                forward_port_prs[file] = forward_port_prs.get(file, set()).union([pr])
+    except github.RateLimitExceededException:
+        if 'GITPOD_HOST' in os.environ:
+            warnings.warn(
+                'Unable to forward-port PRs; set `GITHUB_TOKEN` to increase the rate limit')
+            return forward_port_prs
+        raise
+    return forward_port_prs
+
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
 
 shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
@@ -306,6 +335,7 @@ def get_data():
     data = {}
     max_len = max((len(i) for i in port_status), default=0)
     with tqdm(port_status.items(), desc='getting status information') as pbar:
+        forward_port_prs = get_forward_port_prs()
         for f_import, f_status in pbar:
             pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
             path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
@@ -319,7 +349,8 @@ def get_data():
                 status=f_status,
                 lines=lines,
                 labels=github_labels(f_status.mathlib4_pr) if ((not f_status.ported) and
-                                                                f_status.mathlib4_pr) else []
+                                                                f_status.mathlib4_pr) else [],
+                forward_port_prs=forward_port_prs.get(f_status.mathlib4_file, [])
             )
 
     with tqdm(data.items(), desc='building import graph') as pbar:
