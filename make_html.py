@@ -314,10 +314,12 @@ def get_forward_port_prs():
 
     try:
         pulls = mathlib4repo().get_pulls(state="open")
-        forward_ports = (pr for pr in pulls if 'mathlib3-pair' in (l.name for l in pr.get_labels()))
-        for pr in forward_ports:
-            for file in (f.filename for f in pr.get_files()):
-                forward_port_prs[file] = forward_port_prs.get(file, set()).union([pr])
+        with tqdm(pulls, desc='getting mathlib3-pair prs') as pbar:
+            for pr in pbar:
+                if not 'mathlib3-pair' in (l.name for l in pr.get_labels()):
+                    continue
+                for file in (f.filename for f in pr.get_files()):
+                    forward_port_prs[file] = forward_port_prs.get(file, set()).union([pr])
     except github.RateLimitExceededException:
         if 'GITPOD_HOST' in os.environ:
             warnings.warn(
@@ -334,8 +336,8 @@ shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 def get_data():
     data = {}
     max_len = max((len(i) for i in port_status), default=0)
+    forward_port_prs = get_forward_port_prs()
     with tqdm(port_status.items(), desc='getting status information') as pbar:
-        forward_port_prs = get_forward_port_prs()
         for f_import, f_status in pbar:
             pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
             path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')

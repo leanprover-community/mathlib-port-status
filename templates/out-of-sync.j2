@@ -108,7 +108,7 @@ $(document).ready(function () {
             <td>
                 <ul>
                     {%- for pr in d.forward_port_prs %}
-                        <li><a href={{ pr.html_url }}>{{ pr.number }}</a></li>
+                        <li><a href={{ pr.html_url }}>#{{ pr.number }}</a></li>
                     {%- endfor %}
                 </ul>
             </td>
