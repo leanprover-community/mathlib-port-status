@@ -50,7 +50,7 @@ $(document).ready(function () {
     let table = elem.DataTable({
         columns: [
             { class: 'dt-control', orderable: false },
-            null, null, null, null,
+            null, null, null, null, null,
         ],
     });
     elem.on('click', 'td.dt-control', function () {
@@ -70,13 +70,14 @@ $(document).ready(function () {
     });
 });
 </script>
-<div class="table-responsive"><table class="table table-sm sync-table">
+<div class="table-responsive"><table class="table table-sm sync-table" data-order="[[5, &quot;desc&quot;]]">
     <thead>
         <th></th>
         <th>File</th>
         <th>Verified at</th>
         <th>Mathlib3 changes (newest first)</th>
         <th>&pm;</th>
+        <th title="Length of the longest chain of mathlib3 files importing this file.">Import depth</th>
     </thead>
     <tbody>
     {%- for d in needs_sync %}
@@ -102,9 +103,10 @@ $(document).ready(function () {
                 <span style="display: none"></span>
                 <span class="text-success" title="added">+{{added}}</span>&nbsp;<span class="text-danger" title="removed">-{{removed}}</span>
             </td>
+            <td>{{ d.dependent_depth }}</td>
         </tr>
         <tr{% if not d.status.ported %} class="table-warning"{% endif %} data-is-child="true">
-            <td colspan="5">
+            <td colspan="6">
                 <pre><code class="language-diff">{{ d.forward_port.diff }}</code></pre>
             </td>
         </tr>

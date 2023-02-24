@@ -165,6 +165,7 @@ class Mathlib3FileData:
     labels: Optional[List[dict[str, str]]]
     dependents: Optional[List['Mathlib3FileData']] = None
     dependencies: Optional[List['Mathlib3FileData']] = None
+    dependent_depth: int = 0
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
@@ -320,6 +321,12 @@ def get_data():
                 f_data.dependencies = [
                     data[k] for k in nx.ancestors(graph, f_import) if k in data
                 ]
+                # Measure the longest path from the node.
+                # Top-level files that are never imported have depth 0,
+                # all imports of a file have strictly larger depth
+                _g = graph.subgraph(nx.descendants(graph, f_import).union([f_import]))
+                f_data.dependent_depth = nx.dag_longest_path_length(_g)
+
                 graph.nodes[f_import]["data"] = f_data
 
 
