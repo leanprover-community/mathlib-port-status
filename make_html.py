@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import datetime
 from enum import Enum
 import functools
 from pathlib import Path
@@ -166,6 +167,13 @@ class Mathlib3FileData:
     dependencies: Optional[List['Mathlib3FileData']] = None
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
+
+    @functools.cached_property
+    def date_ported(self) -> datetime.datetime:
+        if not self.mathlib4_history:
+            return None
+        else:
+            return datetime.datetime.fromtimestamp(self.mathlib4_history[-1].commit.committed_date, datetime.timezone.utc)
 
     @functools.cached_property
     def state(self):
