@@ -184,13 +184,6 @@ class Mathlib3FileData:
         return Path('src', *self.mathlib3_import).with_suffix('.lean')
 
     @functools.cached_property
-    def date_ported(self) -> datetime.datetime:
-        if not self.mathlib4_history:
-            return None
-        else:
-            return datetime.datetime.fromtimestamp(self.mathlib4_history[-1].commit.committed_date, datetime.timezone.utc)
-
-    @functools.cached_property
     def state(self):
         if self.status.ported:
             return PortState.PORTED
