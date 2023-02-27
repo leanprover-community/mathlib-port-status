@@ -71,11 +71,11 @@ def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, 
 
 @functools.cache
 def text_color_of_color(color):
-        r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
-        perceived_lightness = (
-            (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
-        lightness_threshold = 0.453
-        return 'black' if perceived_lightness > lightness_threshold else 'white'
+    r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
+    perceived_lightness = (
+        (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
+    lightness_threshold = 0.453
+    return 'black' if perceived_lightness > lightness_threshold else 'white'
 
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
@@ -146,13 +146,11 @@ class Mathlib3FileData:
     mathlib3_import: List[str]
     status: port_status_yaml.PortStatusEntry
     lines: Optional[int]
-    labels: Optional[List[dict[str, str]]]
     dependents: Optional[List['Mathlib3FileData']] = None
     dependencies: Optional[List['Mathlib3FileData']] = None
     dependent_depth: int = 0
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
-    forward_port_prs: Optional[dict] = None
 
     @functools.cached_property
     def date_ported(self) -> datetime.datetime:
@@ -289,11 +287,18 @@ shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 def get_data():
     data = {}
     max_len = max((len(i) for i in port_status), default=0)
-    forward_port_prs = get_forward_port_prs()
     with tqdm(port_status.items(), desc='getting status information') as pbar:
         for f_import, f_status in pbar:
             pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
             path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
+
+            if f_status.sync_prs is None:
+                f_status.sync_prs = []
+            if f_status.labels is None:
+                f_status.labels = []
+            # Add the text color to the lists from the yaml file which are `[label name, label color]`.
+            f_status.labels = [[*x, text_color_of_color(x[1])] for x in f_status.labels if x]
+
             try:
                 with path.open('r') as f_src:
                     lines = len(f_src.readlines())
@@ -302,9 +307,7 @@ def get_data():
             data[f_import] = Mathlib3FileData(
                 mathlib3_import=f_import.split('.'),
                 status=f_status,
-                lines=lines,
-                labels=github_labels(f_status.mathlib4_pr) if ((not f_status.ported) and
-                                                                f_status.mathlib4_pr) else [],
+                lines=lines
             )
 
     with tqdm(data.items(), desc='building import graph') as pbar:

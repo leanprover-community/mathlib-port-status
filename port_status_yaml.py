@@ -22,9 +22,9 @@ class PortStatusEntry:
     source: Optional[Source]
     mathlib4_pr: Optional[int]
     mathlib4_file: Optional[str]
-    comment: Comment = field(default_factory=Comment)
     labels: Optional[list]
     sync_prs: Optional[list]
+    comment: Comment = field(default_factory=Comment)
 
 def yaml_md_load(wikicontent: bytes):
     return yaml.safe_load(wikicontent.replace(b"```", b""))
