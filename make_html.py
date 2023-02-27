@@ -296,7 +296,6 @@ def get_data():
                 f_status.sync_prs = []
             if f_status.labels is None:
                 f_status.labels = []
-            # Add the text color to the dict from the yaml file which has keys `name`, `color`.
             for label in f_status.labels:
                 label.text_color = text_color_of_color(label.color)
 
