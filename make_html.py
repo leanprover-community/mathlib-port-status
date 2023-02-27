@@ -292,8 +292,8 @@ def get_data():
             pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
             path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
 
-            if f_status.sync_prs is None:
-                f_status.sync_prs = []
+            if f_status.mathlib4_sync_prs is None:
+                f_status.mathlib4_sync_prs = []
             if f_status.labels is None:
                 f_status.labels = []
             for label in f_status.labels:

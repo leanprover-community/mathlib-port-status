@@ -28,7 +28,7 @@ class PortStatusEntry:
     mathlib4_pr: Optional[int]
     mathlib4_file: Optional[str]
     labels: Optional[list[Label]]
-    sync_prs: Optional[list[int]]
+    mathlib4_sync_prs: Optional[list[int]]
     comment: Comment = field(default_factory=Comment)
 
 def yaml_md_load(wikicontent: bytes):
