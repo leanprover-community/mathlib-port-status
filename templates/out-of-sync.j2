@@ -107,10 +107,10 @@ $(document).ready(function () {
                 <span class="text-success" title="added">+{{added}}</span>&nbsp;<span class="text-danger" title="removed">-{{removed}}</span>
             </td>
             <td>{{ d.dependent_depth }}</td>
-            <td>
+            <td data-order="{{d.status.mathlib4_sync_prs | min}}">
                 <ul>
                     {%- for pr in d.status.mathlib4_sync_prs %}
-                        <li><a href="https://github.com/leanprover-community/mathlib4/pull/{{pr}}">#{{ pr }}</a></li>
+                        <li><a href="https://github.com/leanprover-community/mathlib4/pull/{{pr}}">#{{pr}}</a></li>
                     {%- endfor %}
                 </ul>
             </td>
