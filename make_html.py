@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 import datetime
 from enum import Enum
 import functools
+import hashlib
 from pathlib import Path
 import logging
 import re
@@ -169,6 +170,11 @@ class Mathlib3FileData:
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
+    @property
+    def mathlib3_file(self) -> Path:
+        # todo: doesn't work for lean3 core
+        return Path('src', *self.mathlib3_import).with_suffix('.lean')
+
     @functools.cached_property
     def date_ported(self) -> datetime.datetime:
         if not self.mathlib4_history:
@@ -246,7 +252,7 @@ def commit_exists(src: port_status_yaml.PortStatusEntry.Source) -> bool:
         else:
             return True
 
-def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) -> Markup:
+def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit], path: Optional[str] = None) -> Markup:
     if isinstance(sha, git.Commit):
         url = get_github_name(sha.repo)
         sha = port_status_yaml.PortStatusEntry.Source(repo=url, commit=sha.hexsha)
@@ -255,12 +261,17 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit]) ->
         valid = commit_exists(sha)
 
     if isinstance(sha, port_status_yaml.PortStatusEntry.Source):
+        url = f"https://github.com/{sha.repo}/commit/{sha.commit}"
+        if path is not None:
+            # https://github.com/orgs/community/discussions/43908#discussioncomment-4651001
+            url = f"{url}#diff-{hashlib.sha256(str(path).encode('utf8')).hexdigest()}"
+
         return Markup(
-            '<a href="https://github.com/{repo}/commit/{sha}"' +
+            '<a href="{url}"' +
                 (' class="font-monospace text-danger" title="commit does not seem to exist!"' if not valid else
                  ' class="font-monospace"') +
                 '>{short_sha}</a>'
-        ).format(repo=sha.repo, sha=sha.commit, short_sha=sha.commit[:8],
+        ).format(url=url, short_sha=sha.commit[:8],
             extra=' class="text-danger" title="commit does not seem to exist!"' if not valid else '')
     else:
         return Markup('<span title="Unknown" class="text-danger">???</span>')

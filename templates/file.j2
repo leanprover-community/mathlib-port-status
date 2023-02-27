@@ -115,7 +115,7 @@ if (range != null) {
                     {# We hide the boring commits so that they only appear if someone actually references them in the URL or a sync header #}
                     {% set hidden = diff is none and c.hexsha not in mentioned %}
                     <div class="card mb-1 card-horizontal{% if hidden %} d-none{% endif %}" data-mathlib3-sha="{{ c.hexsha }}">
-                        <div class="card-header">{{c | link_sha}}</div>
+                        <div class="card-header">{{c | link_sha(path=data.mathlib3_file)}}</div>
                         <div class="card-body">
                             {% if diff is not none %}
                                 {{ commit_details(c, diff, default_repo="leanprover-community/mathlib") }}
@@ -138,7 +138,7 @@ if (range != null) {
                     {% set is_last_sync = data.status.source.commit == c.hexsha %}
                     {% set hidden = diff is none and not is_last_sync and c.hexsha not in mentioned %}
                     <div class="card mb-1 card-horizontal{% if hidden %} d-none{% endif %}" data-mathlib3-sha="{{ c.hexsha }}">
-                        <div class="card-header">{{c | link_sha}}</div>
+                        <div class="card-header">{{c | link_sha(path=data.mathlib3_file)}}</div>
                         <div class="card-body">
                             {% if is_last_sync %}<p class="text-muted card-text">(last sync)</p>{% endif %}
                             {% if diff is not none %}
@@ -151,7 +151,7 @@ if (range != null) {
                 {%- endfor %}
                 {% if data.status.source.commit != data.forward_port.base_commit.hexsha %}
                     <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ data.forward_port.base_commit.hexsha }}">
-                        <div class="card-header">{{data.forward_port.base_commit | link_sha}}</div>
+                        <div class="card-header">{{data.forward_port.base_commit | link_sha(path=data.mathlib3_file) }}</div>
                         <div class="card-body">
                             <p class="text-muted card-text">(first ported)</p></div>
                     </div>
@@ -180,11 +180,11 @@ if (range != null) {
                 </div>
                 {%- for h in data.mathlib4_history %}
                     <div class="card mb-1 card-horizontal" data-mathlib3-sha="{{ h.source.commit }}">
-                        <div class="card-header">{{h.source | link_sha}}</div>
+                        <div class="card-header">{{h.source | link_sha(path=data.mathlib3_file)}}</div>
                         <div class="card-body">
                             {{ commit_details(h.commit, h.diff, default_repo="leanprover-community/mathlib4") }}
                         </div>
-                        <div class="card-footer">{{h.commit | link_sha}}</div>
+                        <div class="card-footer">{{h.commit | link_sha(path=data.status.mathlib4_file) }}</div>
                     </div>
                 {%- endfor %}
             </div>
