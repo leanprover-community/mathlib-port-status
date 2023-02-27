@@ -72,12 +72,14 @@ $(document).ready(function () {
 </script>
 <div class="table-responsive"><table class="table table-sm sync-table" data-order="[[5, &quot;desc&quot;]]">
     <thead>
-        <th></th>
-        <th>File</th>
-        <th>Verified at</th>
-        <th>Mathlib3 changes (newest first)</th>
-        <th>&pm;</th>
-        <th title="Length of the longest chain of mathlib3 files importing this file.">Import depth</th>
+        <tr>
+            <th></th>
+            <th>File</th>
+            <th>Verified at</th>
+            <th>Mathlib3 changes (newest first)</th>
+            <th>&pm;</th>
+            <th title="Length of the longest chain of mathlib3 files importing this file.">Import depth</th>
+        </tr>
     </thead>
     <tbody>
     {%- for d in needs_sync %}
