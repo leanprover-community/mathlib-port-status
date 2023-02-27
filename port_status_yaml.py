@@ -18,12 +18,17 @@ class PortStatusEntry:
     class Source:
         repo: str
         commit: str
+    @dataclass
+    class Label:
+        name: str
+        color: str
+        text_color: str = '000000'
     ported: bool
     source: Optional[Source]
     mathlib4_pr: Optional[int]
     mathlib4_file: Optional[str]
-    labels: Optional[list]
-    sync_prs: Optional[list]
+    labels: Optional[list[Label]]
+    sync_prs: Optional[list[int]]
     comment: Comment = field(default_factory=Comment)
 
 def yaml_md_load(wikicontent: bytes):

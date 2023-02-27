@@ -152,17 +152,17 @@ class Mathlib3FileData:
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
 
+    @property
+    def mathlib3_file(self) -> Path:
+        # todo: doesn't work for lean3 core
+        return Path('src', *self.mathlib3_import).with_suffix('.lean')
+
     @functools.cached_property
     def date_ported(self) -> datetime.datetime:
         if not self.mathlib4_history:
             return None
         else:
             return datetime.datetime.fromtimestamp(self.mathlib4_history[-1].commit.committed_date, datetime.timezone.utc)
-
-    @property
-    def mathlib3_file(self) -> Path:
-        # todo: doesn't work for lean3 core
-        return Path('src', *self.mathlib3_import).with_suffix('.lean')
 
     @functools.cached_property
     def state(self):
@@ -296,8 +296,9 @@ def get_data():
                 f_status.sync_prs = []
             if f_status.labels is None:
                 f_status.labels = []
-            # Add the text color to the lists from the yaml file which are `[label name, label color]`.
-            f_status.labels = [[*x, text_color_of_color(x[1])] for x in f_status.labels if x]
+            # Add the text color to the dict from the yaml file which has keys `name`, `color`.
+            for label in f_status.labels:
+                label.text_color = text_color_of_color(label.color)
 
             try:
                 with path.open('r') as f_src:
