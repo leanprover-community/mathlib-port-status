@@ -3,6 +3,14 @@
 
 {% block head %}
 {{ super() }}
+<meta property="og:title" content="{{mathlib3_import|join('.')}} | mathlib porting status">
+<meta property="og:site_name" content="mathlib porting status">
+{% if data.status.ported %}
+<meta property="og:description" content="This file has been ported to mathlib4!">
+{% else %}
+<meta property="og:description" content="{{progress.meta_summary([data] + data.dependencies)}}">
+{% endif %}
+<meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="{{site_url}}/hljs-light.css">
 <link rel="stylesheet" href="{{site_url}}/hljs-dark.css">
 <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>

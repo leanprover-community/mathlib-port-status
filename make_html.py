@@ -290,6 +290,7 @@ template_env.filters['set'] = set
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
+template_env.globals['now'] = datetime.datetime.utcnow()
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 mathlib4_dir = build_dir / 'repos' / 'mathlib4'
