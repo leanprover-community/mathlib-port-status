@@ -70,29 +70,12 @@ def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, 
     return commits
 
 @functools.cache
-def github_labels(pr):
-    try:
-        pull_request = mathlib4repo().get_pull(pr)
-        raw_labels = list(pull_request.get_labels())
-    except github.RateLimitExceededException:
-        if 'GITPOD_HOST' in os.environ:
-            warnings.warn(
-                'Unable to fetch PR labels; set `GITHUB_TOKEN` to increase the rate limit')
-            return []
-        raise
-    def text_color_of_color(color):
+def text_color_of_color(color):
         r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
         perceived_lightness = (
             (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
         lightness_threshold = 0.453
         return 'black' if perceived_lightness > lightness_threshold else 'white'
-
-    labels = [{'name': label.name,
-               'color': label.color,
-               'text_color': text_color_of_color(label.color)}
-              for label in raw_labels]
-    return labels
-
 
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
@@ -298,30 +281,6 @@ mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 graph = parse_imports(mathlib_dir / 'src')
 graph = nx.transitive_reduction(graph)
 
-
-@functools.cache
-def get_forward_port_prs():
-
-    # Keys are mathlib4-files and value is a set of PRs that
-    # are open, have label 'mathlib3-pair' and touch this file.
-    forward_port_prs = dict()
-
-    try:
-        pulls = mathlib4repo().get_pulls(state="open")
-        with tqdm(pulls, desc='getting mathlib3-pair prs') as pbar:
-            for pr in pbar:
-                if not 'mathlib3-pair' in (l.name for l in pr.get_labels()):
-                    continue
-                for file in (f.filename for f in pr.get_files()):
-                    forward_port_prs[file] = forward_port_prs.get(file, set()).union([pr])
-    except github.RateLimitExceededException:
-        if 'GITPOD_HOST' in os.environ:
-            warnings.warn(
-                'Unable to forward-port PRs; set `GITHUB_TOKEN` to increase the rate limit')
-            return forward_port_prs
-        raise
-    return forward_port_prs
-
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
 
 shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
@@ -346,7 +305,6 @@ def get_data():
                 lines=lines,
                 labels=github_labels(f_status.mathlib4_pr) if ((not f_status.ported) and
                                                                 f_status.mathlib4_pr) else [],
-                forward_port_prs=forward_port_prs.get(f_status.mathlib4_file, [])
             )
 
     with tqdm(data.items(), desc='building import graph') as pbar:

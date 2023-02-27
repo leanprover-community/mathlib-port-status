@@ -46,10 +46,10 @@
                     </td>
                     <td>{{f_data.status.comment.message | htmlify_comment }}</td>
                     <td>
-                    {%- for label in f_data.labels %}
-                        <a class="badge rounded-pill" href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'
-                            style="background-color:#{{label.color}};color:{{label.text_color}}">
-                            {{label.name}}
+                    {%- for label_name, label_color in f_data.status.labels %}
+                        <a class="badge rounded-pill" href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label_name}}"'
+                            style="background-color:#{{label_color}};color:{{text_color_of_color(label_color)}}">
+                            {{label_name}}
                         </a>
                     {%- endfor %}
                     </td>

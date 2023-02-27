@@ -107,8 +107,8 @@ $(document).ready(function () {
             <td>{{ d.dependent_depth }}</td>
             <td>
                 <ul>
-                    {%- for pr in d.forward_port_prs %}
-                        <li><a href={{ pr.html_url }}>#{{ pr.number }}</a></li>
+                    {%- for pr in d.status.sync_prs %}
+                        <li><a href='https://github.com/leanprover-community/mathlib4/pull/"{{pr}}"'>#{{ pr }}</a></li>
                     {%- endfor %}
                 </ul>
             </td>
