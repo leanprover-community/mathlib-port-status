@@ -426,7 +426,6 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                     mathlib4_import=mathlib4_import,
                     data=get_data().get(f_import),
                     graph=graph,
-                    text_color_of_color=text_color_of_color,
                 ):
                     file_f.write(chunk)
 
