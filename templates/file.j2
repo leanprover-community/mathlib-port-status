@@ -257,7 +257,7 @@ cards
     {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
 </small></h2>
 {% if data.dependencies is none %}
-    Could not display informations. You might need to update your copy of `mathlib`.
+    <div class="alert alert-danger">Dependency information not available. This file might be missing from the version of mathlib this website was built from.</div>
 {%else%}
     {{ progress.bars([data] + data.dependencies) }}
     {% set unported_deps = ([data] + data.dependencies)|rejectattr("state", "equalto", PortState.PORTED)|list%}
