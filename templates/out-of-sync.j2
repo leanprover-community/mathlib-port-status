@@ -108,7 +108,7 @@ $(document).ready(function () {
             </td>
             <td>{{ d.dependent_depth }}</td>
             <td data-order="{{d.status.mathlib4_sync_prs | length}}">
-                {% set separator = joiner('<br />') %}
+                {% set separator = joiner('<br />' | safe) %}
                 {%- for pr in d.status.mathlib4_sync_prs %}{{ separator() }}
                     <a href="https://github.com/leanprover-community/mathlib4/pull/{{pr.num}}"
                         title="{{ pr.labels | map(attribute="name") | join(", ") }}">#{{pr.num}}</a>
