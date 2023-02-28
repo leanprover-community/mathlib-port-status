@@ -250,6 +250,13 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit], pa
     else:
         return Markup('<span title="Unknown" class="text-danger">???</span>')
 
+def text_color_of_color(color):
+    r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
+    perceived_lightness = (
+        (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
+    lightness_threshold = 0.453
+    return 'black' if perceived_lightness > lightness_threshold else 'white'
+
 port_status = port_status_yaml.load()
 
 build_dir = Path('build')
@@ -261,6 +268,7 @@ template_env.filters['htmlify_comment'] = htmlify_comment
 template_env.filters['htmlify_text'] = htmlify_text
 template_env.filters['link_sha'] = link_sha
 template_env.filters['set'] = set
+template_env.filters['text_color_of_color'] = text_color_of_color
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
@@ -318,13 +326,6 @@ def get_data():
         f_data.mathlib4_history = history.get(f_import, [])
 
     return data
-
-def text_color_of_color(color):
-    r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
-    perceived_lightness = (
-        (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
-    lightness_threshold = 0.453
-    return 'black' if perceived_lightness > lightness_threshold else 'white'
 
 def make_index(env, html_root):
     data = get_data()
