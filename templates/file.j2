@@ -182,7 +182,7 @@ if (range != null) {
                             {%- for label in pr.labels %}
                                 <a class="badge rounded-pill"
                                     href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'
-                                    style="background-color:#{{label.color}};color:{{text_color_of_color(label.color)}}">
+                                    style="background-color:#{{label.color}};color:{{label.color | text_color_of_color}}">
                                     {{label.name}}
                                 </a>
                             {%- endfor %}
