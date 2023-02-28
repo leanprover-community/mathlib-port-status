@@ -8,6 +8,11 @@ import yaml
 import requests
 
 @dataclass
+class Label:
+    name: str
+    color: str
+
+@dataclass
 class PortStatusEntry:
     """ This class acts as a schema for the wiki yaml file """
     @dataclass
@@ -19,15 +24,15 @@ class PortStatusEntry:
         repo: str
         commit: str
     @dataclass
-    class Label:
-        name: str
-        color: str
+    class SyncPr:
+        num: int
+        labels: list[Label]
     ported: bool
     source: Optional[Source]
     mathlib4_pr: Optional[int]
     mathlib4_file: Optional[str]
     labels: list[Label] = field(default_factory=list)
-    mathlib4_sync_prs: list[int] = field(default_factory=list)
+    mathlib4_sync_prs: list[SyncPr] = field(default_factory=list)
     comment: Comment = field(default_factory=Comment)
 
 def yaml_md_load(wikicontent: bytes):

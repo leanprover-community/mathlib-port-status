@@ -52,6 +52,24 @@
   {%- endfor %}
 </div>
 {% endif %}
+{% if data.status.mathlib4_sync_prs %}
+    <div class="alert alert-warning">
+        This file has open sync PRs:
+        <ul>
+            {%- for pr in data.status.mathlib4_sync_prs %}
+                <li><a href="https://github.com/leanprover-community/mathlib4/pull/{{pr.num}}">#{{pr.num}}</a>
+                    {%- for label in pr.labels %}
+                        <a class="badge rounded-pill"
+                            href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'
+                            style="background-color:#{{label.color}};color:{{text_color_of_color(label.color)}}">
+                            {{label.name}}
+                        </a>
+                    {%- endfor %}
+                </li>
+            {%- endfor %}
+        </ul>
+    </div>
+{% endif %}
 {% if data.status.comment.message is not none %}
 <p>Before working on this file, consider the following:</p>
 <figure>

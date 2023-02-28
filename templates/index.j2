@@ -48,7 +48,7 @@
                     <td>
                     {%- for label in f_data.status.labels %}
                         <a class="badge rounded-pill" href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'
-                            style="background-color:#{{label.color}};color:{{label.text_color}}">
+                            style="background-color:#{{label.color}};color:{{text_color_of_color(label.color)}}">
                             {{label.name}}
                         </a>
                     {%- endfor %}

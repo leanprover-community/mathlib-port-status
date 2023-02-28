@@ -69,14 +69,6 @@ def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, 
         commits.insert(0, (c_between, None))
     return commits
 
-@functools.cache
-def text_color_of_color(color):
-    r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
-    perceived_lightness = (
-        (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
-    lightness_threshold = 0.453
-    return 'black' if perceived_lightness > lightness_threshold else 'white'
-
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
 
@@ -291,10 +283,6 @@ def get_data():
         for f_import, f_status in pbar:
             pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
             path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
-
-            for label in f_status.labels:
-                label.text_color = text_color_of_color(label.color)
-
             try:
                 with path.open('r') as f_src:
                     lines = len(f_src.readlines())
@@ -331,6 +319,13 @@ def get_data():
 
     return data
 
+def text_color_of_color(color):
+    r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
+    perceived_lightness = (
+        (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
+    lightness_threshold = 0.453
+    return 'black' if perceived_lightness > lightness_threshold else 'white'
+
 def make_index(env, html_root):
     data = get_data()
     ported = {}
@@ -348,7 +343,10 @@ def make_index(env, html_root):
         index_f.write(
             env.get_template('index.j2').render(
                 all=data.values(),
-                ported=ported, unported=unported, in_progress=in_progress))
+                ported=ported,
+                unported=unported,
+                in_progress=in_progress,
+                text_color_of_color=text_color_of_color))
 
 def make_out_of_sync(env, html_root, mathlib_dir):
     # Not using re.compile as this is passed to git which uses a different regex dialect:
@@ -430,6 +428,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                     mathlib4_import=mathlib4_import,
                     data=get_data().get(f_import),
                     graph=graph,
+                    text_color_of_color=text_color_of_color,
                 ):
                     file_f.write(chunk)
 
