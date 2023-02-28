@@ -3,6 +3,14 @@
 
 {% block head %}
 {{ super() }}
+<meta property="og:title" content="{{mathlib3_import|join('.')}} | mathlib porting status">
+<meta property="og:site_name" content="mathlib porting status">
+{% if data.status.ported %}
+<meta property="og:description" content="This file has been ported to mathlib4!">
+{% elif data.dependencies is not none %}
+<meta property="og:description" content="{{progress.meta_summary([data] + data.dependencies)}}">
+{% endif %}
+<meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="{{site_url}}/hljs-light.css">
 <link rel="stylesheet" href="{{site_url}}/hljs-dark.css">
 <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
@@ -247,16 +255,16 @@ cards
 <div class="container">
 {% endif %}
 
-{% set parts = data.dep_counts %}
-<h2 id="dependencies">Dependencies <small>
-    {%- set plus = joiner(" + ") %}
-    {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
-    {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
-    {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
-</small></h2>
 {% if data.dependencies is none %}
     <div class="alert alert-danger">Dependency information not available. This file might be missing from the version of mathlib this website was built from.</div>
-{%else%}
+{% else %}
+    {% set parts = data.dep_counts %}
+    <h2 id="dependencies">Dependencies <small>
+        {%- set plus = joiner(" + ") %}
+        {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
+        {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
+        {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
+    </small></h2>
     {{ progress.bars([data] + data.dependencies) }}
     {% set unported_deps = ([data] + data.dependencies)|rejectattr("state", "equalto", PortState.PORTED)|list%}
     {% if unported_deps %}
@@ -284,7 +292,7 @@ cards
             {% endfor %}
         </ul>
     {%else%}
-        <p>All dependencies are ported!</p>
+    <p>All dependencies are ported!</p>
     {%endif%}
     {% set unsynced_deps = data.dependencies|selectattr("forward_port.unported_commits")|list%}
     {% if unsynced_deps %}
