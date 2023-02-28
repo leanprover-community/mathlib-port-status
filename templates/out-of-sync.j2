@@ -108,12 +108,11 @@ $(document).ready(function () {
             </td>
             <td>{{ d.dependent_depth }}</td>
             <td data-order="{{d.status.mathlib4_sync_prs | length}}">
-                <ul>
-                    {%- for pr in d.status.mathlib4_sync_prs %}
-                        <li><a href="https://github.com/leanprover-community/mathlib4/pull/{{pr.num}}"
-                            title="{%- for label in pr.labels %}{{label.name}}{{ ", " if not loop.last }}{%- endfor %}">#{{pr.num}}</a></li>
-                    {%- endfor %}
-                </ul>
+                {% set separator = joiner('<br />') %}
+                {%- for pr in d.status.mathlib4_sync_prs %}{{ separator() }}
+                    <a href="https://github.com/leanprover-community/mathlib4/pull/{{pr.num}}"
+                        title="{{ pr.labels | map(attribute="name") | join(", ") }}">#{{pr.num}}</a>
+                {%- endfor %}
             </td>
         </tr>
         <tr{% if not d.status.ported %} class="table-warning"{% endif %} data-is-child="true">
