@@ -138,8 +138,8 @@ class Mathlib3FileData:
     mathlib3_import: List[str]
     status: port_status_yaml.PortStatusEntry
     lines: Optional[int]
-    dependents: List['Mathlib3FileData'] = field(default_factory=list)
-    dependencies: List['Mathlib3FileData'] = field(default_factory=list)
+    dependents: Optional[List['Mathlib3FileData']] = None
+    dependencies: Optional[List['Mathlib3FileData']] = None
     dependent_depth: int = 0
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
