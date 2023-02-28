@@ -69,31 +69,6 @@ def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, 
         commits.insert(0, (c_between, None))
     return commits
 
-@functools.cache
-def github_labels(pr):
-    try:
-        pull_request = mathlib4repo().get_pull(pr)
-        raw_labels = list(pull_request.get_labels())
-    except github.RateLimitExceededException:
-        if 'GITPOD_HOST' in os.environ:
-            warnings.warn(
-                'Unable to fetch PR labels; set `GITHUB_TOKEN` to increase the rate limit')
-            return []
-        raise
-    def text_color_of_color(color):
-        r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
-        perceived_lightness = (
-            (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
-        lightness_threshold = 0.453
-        return 'black' if perceived_lightness > lightness_threshold else 'white'
-
-    labels = [{'name': label.name,
-               'color': label.color,
-               'text_color': text_color_of_color(label.color)}
-              for label in raw_labels]
-    return labels
-
-
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
 
@@ -163,7 +138,6 @@ class Mathlib3FileData:
     mathlib3_import: List[str]
     status: port_status_yaml.PortStatusEntry
     lines: Optional[int]
-    labels: Optional[List[dict[str, str]]]
     dependents: Optional[List['Mathlib3FileData']] = None
     dependencies: Optional[List['Mathlib3FileData']] = None
     dependent_depth: int = 0
@@ -276,6 +250,13 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit], pa
     else:
         return Markup('<span title="Unknown" class="text-danger">???</span>')
 
+def text_color_of_color(color):
+    r, g, b = map(lambda i: int(color[i:i + 2], 16), (0, 2, 4))
+    perceived_lightness = (
+        (r * 0.2126) + (g * 0.7152) + (b * 0.0722)) / 255
+    lightness_threshold = 0.453
+    return 'black' if perceived_lightness > lightness_threshold else 'white'
+
 port_status = port_status_yaml.load()
 
 build_dir = Path('build')
@@ -287,6 +268,7 @@ template_env.filters['htmlify_comment'] = htmlify_comment
 template_env.filters['htmlify_text'] = htmlify_text
 template_env.filters['link_sha'] = link_sha
 template_env.filters['set'] = set
+template_env.filters['text_color_of_color'] = text_color_of_color
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
@@ -318,9 +300,7 @@ def get_data():
             data[f_import] = Mathlib3FileData(
                 mathlib3_import=f_import.split('.'),
                 status=f_status,
-                lines=lines,
-                labels=github_labels(f_status.mathlib4_pr) if ((not f_status.ported) and
-                                                                f_status.mathlib4_pr) else []
+                lines=lines
             )
 
     with tqdm(data.items(), desc='building import graph') as pbar:

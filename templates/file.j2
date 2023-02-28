@@ -51,10 +51,10 @@
 <div class="alert alert-success">This file has been ported!</div>
 {% elif data.state == PortState.IN_PROGRESS %}
 <div class="alert alert-warning">This file is currently being ported at <a href="https://github.com/leanprover-community/mathlib4/pull/{{data.status.mathlib4_pr}}">#{{data.status.mathlib4_pr}}</a>.
-  {%- for label in data.labels %}
+  {%- for label in data.status.labels %}
   <a class="badge rounded-pill"
      href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'
-     style="background-color:#{{label.color}};color:{{label.text_color}}">
+     style="background-color:#{{label.color}};color:{{label.color | text_color_of_color}}">
     {{label.name}}
   </a>
   {%- endfor %}
@@ -181,6 +181,22 @@ if (range != null) {
         <div class="col-lg-6">
             <h3>Changes in mathlib4</h3>
             <div>
+                {% if data.status.mathlib4_sync_prs %}
+                    <div class="alert alert-warning">
+                        This file has an open sync PR:
+                        {%- for pr in data.status.mathlib4_sync_prs %}
+                            <br />
+                            <a href="https://github.com/leanprover-community/mathlib4/pull/{{pr.num}}">#{{pr.num}}</a>
+                            {%- for label in pr.labels %}
+                                <a class="badge rounded-pill"
+                                    href='https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3A"{{label.name}}"'
+                                    style="background-color:#{{label.color}};color:{{label.color | text_color_of_color}}">
+                                    {{label.name}}
+                                </a>
+                            {%- endfor %}
+                        {%- endfor %}
+                    </div>
+                {% endif %}
                 <div class="row">
                     <div class="col-1 fw-bold">mathlib3</div>
                     <div class="col-10"></div>
@@ -286,7 +302,7 @@ cards
                 <li><a href="{{ site_url }}/file/{{d.mathlib3_import|join('/')}}"><code>{{d.mathlib3_import|join('.')}}</code></a></li>
             {% endfor %}
         </ul>
-    {% endif %}>
+    {% endif %}
 {% endif %}
 
 {% endblock %}
