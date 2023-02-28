@@ -344,10 +344,7 @@ def make_index(env, html_root):
         index_f.write(
             env.get_template('index.j2').render(
                 all=data.values(),
-                ported=ported,
-                unported=unported,
-                in_progress=in_progress,
-                text_color_of_color=text_color_of_color))
+                ported=ported, unported=unported, in_progress=in_progress))
 
 def make_out_of_sync(env, html_root, mathlib_dir):
     # Not using re.compile as this is passed to git which uses a different regex dialect:
