@@ -325,11 +325,8 @@ def get_data():
                 graph.nodes[f_import]["data"] = f_data
 
     history = get_history(git.Repo(mathlib4_dir))
-    def patch_filter(last, current):
-        return False
-        # d = last.diff(current, paths=['upstream-rev'])
-        # return bool(d)
-    port_history = get_history(git.Repo(mathlib3port_dir), root='Mathbin', patch_filter=patch_filter)
+    port_history = get_history(git.Repo(mathlib3port_dir), root='Mathbin',
+        rev='new-style-shas..master', desc='Getting mathlib3port history')
     for f_import, f_data in data.items():
         f_data.mathlib4_history = history.get(f_import, [])
         f_data.mathlib3port_history = port_history.get(f_import, [])
