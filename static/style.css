@@ -30,6 +30,34 @@ summary {
     margin-bottom: 1em;
 }
 
+.card .card-body {
+    min-width: 0;
+}
+
+pre code {
+    overflow: auto;
+}
+
+.card-group.card-group-vertical {
+    flex-flow: column;
+}
+
+.card-group.card-group-vertical > .card:not(:first-child) {
+    border-radius: var(--bs-card-border-radius);
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+}
+.card-group.card-group-vertical > .card:not(:last-child) {
+    border-radius: var(--bs-card-border-radius);
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.card-group.card-group-vertical > .card+.card {
+    margin-top: 0;
+    border-top: 0;
+    border-left: var(--bs-card-border-width) solid var(--bs-card-border-color);
+}
+
 .card.card-horizontal {
     flex-direction: row;
     --bs-card-spacer-x: 0.5rem;

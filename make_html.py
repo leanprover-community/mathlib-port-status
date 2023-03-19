@@ -12,6 +12,7 @@ import sys
 from typing import Optional, List, Dict, Union, Tuple
 import os
 import warnings
+import logging
 
 import dacite
 import git
@@ -27,7 +28,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 import make_old_html
 import port_status_yaml
 from htmlify_comment import htmlify_comment, htmlify_text
-from get_mathlib4_history import get_mathlib4_history, FileHistoryEntry
+from get_mathlib4_history import get_history, FileHistoryEntry
 
 github_token = os.environ.get("GITHUB_TOKEN")
 
@@ -143,6 +144,7 @@ class Mathlib3FileData:
     dependent_depth: int = 0
     forward_port: Optional[ForwardPortInfo] = None
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
+    mathlib3port_history: List[FileHistoryEntry] = field(default_factory=list)
 
     @property
     def mathlib3_file(self) -> Path:
@@ -275,6 +277,7 @@ template_env.globals['nx'] = nx
 template_env.globals['now'] = datetime.datetime.utcnow()
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
+mathlib3port_dir = build_dir / 'repos' / 'mathlib3port'
 mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 
 graph = parse_imports(mathlib_dir / 'src')
@@ -321,10 +324,12 @@ def get_data():
 
                 graph.nodes[f_import]["data"] = f_data
 
-
-    history = get_mathlib4_history(git.Repo(mathlib4_dir))
+    history = get_history(git.Repo(mathlib4_dir))
+    port_history = get_history(git.Repo(mathlib3port_dir), root='Mathbin',
+        rev='new-style-shas..master', desc='Getting mathlib3port history')
     for f_import, f_data in data.items():
         f_data.mathlib4_history = history.get(f_import, [])
+        f_data.mathlib3port_history = port_history.get(f_import, [])
 
     return data
 

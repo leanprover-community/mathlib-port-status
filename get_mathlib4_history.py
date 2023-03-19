@@ -6,6 +6,7 @@ from tqdm import tqdm
 import datetime
 
 import git
+from tqdm import tqdm
 import port_status_yaml
 
 # upstream bug
@@ -52,12 +53,11 @@ def _NULL_TREE(repo):
     null_tree_sha = hashlib.sha1(b"tree 0\0").hexdigest()
     return repo.tree(null_tree_sha)
 
-
-def get_mathlib4_history(repo: git.Repo) -> dict[str, list[FileHistoryEntry]]:
+def get_history(repo: git.Repo, root='Mathlib', rev=None, desc='Getting mathlib4 history') -> dict[str, list[FileHistoryEntry]]:
     file_history = {}
 
     last = _NULL_TREE(repo)
-    with tqdm(repo.iter_commits(paths=['Mathlib'], first_parent=True, reverse=True),
+    with tqdm(repo.iter_commits(rev=rev, paths=[root], first_parent=True, reverse=True),
             desc='Getting mathlib4 history') as pbar:
         for commit in pbar:
             pbar.set_postfix_str(datetime.datetime.fromtimestamp(commit.committed_date).isoformat(), refresh=False)
