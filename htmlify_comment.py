@@ -30,7 +30,7 @@ def htmlify_text(s: Optional[str], default_repo='leanprover-community/mathlib') 
             return m.group(0)
     # TODO: no easy way to build this as an extension for pycmarkgfm
     hacked_links = re.sub(
-        r'(?:([-_a-zA-Z0-9/]*)#([0-9]+))|([0-9a-f]{40})|@([-a-z0-9A-Z_]+)|.*?',
+        r'(?:([-_a-zA-Z0-9/]*)#([0-9]+))|((?<!/)(?<!`)[0-9a-f]{40})|@([-a-z0-9A-Z_]+)|.*?',
         repl_func, s)
     return Markup(pycmarkgfm.gfm_to_html(hacked_links))
 
