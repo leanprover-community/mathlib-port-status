@@ -97,7 +97,7 @@ $(document).ready(function () {
             <td data-order="{{d.forward_port.unported_commits | length}}">
                 <ul>
                     {%- for c, diff in d.forward_port.unported_commits %}
-                        <li>{{c | link_sha}}: {{c.summary | htmlify_comment}}</li>
+                        <li>{{c | link_sha}}: {{c.summary | htmlify_comment}} <small class="text-muted">(@{{c.author.name}})</small></li>
                     {%- endfor %}
                 </ul>
             </td>
