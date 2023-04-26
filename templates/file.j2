@@ -121,7 +121,7 @@ if (range != null) {
             <h3>Changes in mathlib3</h3>
             {% set mentioned = data.mathlib4_history | map(attribute='source.commit') | set %}
             <div>
-                {%- for c, diff in data.forward_port.all_unported_commits %}
+                {%- for c, diff, in_mathlib3_port in data.forward_port.all_unported_commits %}
                     {# We hide the boring commits so that they only appear if someone actually references them in the URL or a sync header #}
                     {% set hidden = diff is none and c.hexsha not in mentioned %}
                     <div class="card-group card-group-vertical mb-1{% if hidden %} d-none{% endif %}" data-mathlib3-sha="{{ c.hexsha }}">
@@ -154,7 +154,7 @@ if (range != null) {
                         </div>
                     </div>
                 {% endif %}
-                {%- for c, diff in data.forward_port.all_ported_commits %}
+                {%- for c, diff, in_mathlib3_port in data.forward_port.all_ported_commits %}
                     {# We hide the boring commits so that they only appear if someone actually references them in the URL or a sync header #}
                     {% set is_last_sync = data.status.source.commit == c.hexsha %}
                     {% set hidden = diff is none and not is_last_sync and c.hexsha not in mentioned %}

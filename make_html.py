@@ -109,17 +109,17 @@ class PortState(Enum):
 @dataclass
 class ForwardPortInfo:
     base_commit: git.Commit
-    all_unported_commits: List[Tuple[git.Commit, git.Diff]]
-    all_ported_commits: List[Tuple[git.Commit, git.Diff]]
+    all_unported_commits: List[Tuple[git.Commit, git.Diff, bool]]
+    all_ported_commits: List[Tuple[git.Commit, git.Diff, bool]]
     diff_lines: List[str]
 
     @property
     def ported_commits(self):
-        return [(c, d) for c, d in self.all_ported_commits if d is not None]
+        return [(c, d, p) for c, d, p in self.all_ported_commits if d is not None]
 
     @property
     def unported_commits(self):
-        return [(c, d) for c, d in self.all_unported_commits if d is not None]
+        return [(c, d, p) for c, d, p in self.all_unported_commits if d is not None]
 
     @property
     def diff(self) -> str:
@@ -411,10 +411,18 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             ported_commits = commits_and_diffs_between(base_commit, sync_commit, fname)
             unported_commits = commits_and_diffs_between(sync_commit, mathlib_repo.head.commit, fname)
 
+            in_mathlib3port = set()
+            for c in f_status.mathlib3port_history:
+                in_mathlib3port.add(c.source.commit)
+            ported_commits = [(c, d, c.hexsha in in_mathlib3port) for c, d in ported_commits]
+            unported_commits = [(c, d, c.hexsha in in_mathlib3port) for c, d in unported_commits]
+
             if result.returncode == 1:
-                data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, result.stdout.splitlines()[4:])
+                diff_lines = result.stdout.splitlines()[4:]
             else:
-                data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, "")
+                diff_lines = []
+
+            data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, diff_lines)
 
     file_template = env.get_template('file.j2')
     with tqdm(port_status.items(), desc="generating file pages") as pbar:

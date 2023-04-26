@@ -100,8 +100,9 @@ $(document).ready(function () {
             <td>{{d.status.source | link_sha }}</td>
             <td data-order="{{d.forward_port.unported_commits | length}}">
                 <ul>
-                    {%- for c, diff in d.forward_port.unported_commits %}
-                        <li>{{c | link_sha}}: {{c.summary | htmlify_comment}} <small class="text-muted">(@{{c.author.name}})</small></li>
+                    {%- for c, diff, in_mathport in d.forward_port.unported_commits %}
+                        <li{% if not in_mathport %} class="text-danger" title="Not yet through mathport"{%endif%}>
+                            {{c | link_sha}}: {{c.summary | htmlify_comment}} <small class="text-muted">(@{{c.author.name}})</small></li>
                     {%- endfor %}
                 </ul>
             </td>
