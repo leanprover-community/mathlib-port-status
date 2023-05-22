@@ -184,6 +184,23 @@ class Mathlib3FileData:
         u, i, p = self.dep_counts
         return u*10000*IN_PROGRESS_EQUIV_UNPORTED+i*10000
 
+    @functools.cached_property
+    def dep_line_counts(self):
+        if self.dependencies is not None:
+            return tuple(
+                sum([x.lines or 0 for x in self.dependencies if x.state == s])
+                for s in PortState)
+        else:
+            return None
+
+    @functools.cached_property
+    def dep_line_counts_sort_key(self) -> int:
+        IN_PROGRESS_EQUIV_UNPORTED = 5
+        if self.dep_line_counts is None:
+            return sys.maxsize
+        u, i, p = self.dep_line_counts
+        return u*10000*IN_PROGRESS_EQUIV_UNPORTED+i*10000
+
     @property
     def dep_graph_data(self) -> Tuple[List[Tuple[str, str]], Dict[str, PortState]]:
         unported_deps = [self] + [d for d in self.dependencies if d.state !=  PortState.PORTED]
@@ -264,6 +281,15 @@ port_status = port_status_yaml.load()
 build_dir = Path('build')
 build_dir.mkdir(parents=True, exist_ok=True)
 
+def si_ify(n : int):
+    if n < 1000:
+        return str(n)
+    n = n // 1000
+    if n < 1000:
+        return str(n) + 'k'
+    n = n // 1000
+    return str(n) + 'M'
+
 template_loader = jinja2.FileSystemLoader(searchpath="templates/")
 template_env = jinja2.Environment(loader=template_loader, autoescape=True)
 template_env.filters['htmlify_comment'] = htmlify_comment
@@ -274,6 +300,7 @@ template_env.filters['text_color_of_color'] = text_color_of_color
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
+template_env.globals['si_ify'] = si_ify
 template_env.globals['now'] = datetime.datetime.utcnow()
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'

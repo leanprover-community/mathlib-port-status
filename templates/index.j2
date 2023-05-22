@@ -70,6 +70,7 @@
                     <th>File</th>
                     <th>comments</th>
                     <th title="Number of files needed by this file">dependencies</th>
+                    <th title="number of lines depended on by this file">(lines)</th>
                     <th title="Number of files depending on this file.&#10;Note that sorting ignores the number of already ported files.">dependents</th>
                     <th class="lines-column">lines</th>
                 </tr>
@@ -77,6 +78,7 @@
             <tbody>
             {%- for f_import, f_data in unported.items()|sort(attribute='1.dep_counts_sort_key') %}
                 {%- set parts = f_data.dep_counts %}
+                {%- set l_parts = f_data.dep_line_counts %}
                 <tr {%- if parts and parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
                     <td>
                         <a href="{{site_url}}/file/{{f_import.replace('.', '/')}}">
@@ -89,6 +91,16 @@
                         {%- if parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{parts[0]}}</span>{%- endif -%}
                         {%- if parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{parts[1]}}</span>{%- endif -%}
                         {%- if parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{parts[2]}}</span>{%- endif -%}
+                    {%- else %}
+                        ?
+                    {%- endif %}
+                    </td>
+                    <td data-sort="{{f_data.dep_line_counts_sort_key}}">
+                    {%- if l_parts is not none %}
+                        {%- set plus = joiner(" + ") %}
+                        {%- if l_parts[0] -%}{{ plus() }}<span class="text-danger" title="unported">{{l_parts[0] | si_ify}}</span>{%- endif -%}
+                        {%- if l_parts[1] -%}{{ plus() }}<span class="text-warning" title="in progress">{{l_parts[1] | si_ify}}</span>{%- endif -%}
+                        {%- if l_parts[2] -%}{{ plus() }}<span class="text-success" title="ported">{{l_parts[2] | si_ify}}</span>{%- endif -%}
                     {%- else %}
                         ?
                     {%- endif %}
