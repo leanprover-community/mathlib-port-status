@@ -297,10 +297,10 @@ template_env.filters['htmlify_text'] = htmlify_text
 template_env.filters['link_sha'] = link_sha
 template_env.filters['set'] = set
 template_env.filters['text_color_of_color'] = text_color_of_color
+template_env.filters['si_ify'] = si_ify
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
-template_env.globals['si_ify'] = si_ify
 template_env.globals['now'] = datetime.datetime.utcnow()
 
 mathlib_dir = build_dir / 'repos' / 'mathlib'
