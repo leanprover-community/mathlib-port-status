@@ -11,14 +11,15 @@
 {%- set l_count = l_ported + l_in_progress + l_unported %}
 {%- set pl_ported = 100 * l_ported / l_count if l_count != 0 else 0 %}
 {%- set pl_in_progress = 100 * l_in_progress / l_count if l_count != 0 else 0 %}
-<div class="progress my-1">
+<div class="progress my-1" title="{{unported|length}} files unported">
     <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
+        title=""
         style="width: {{p_ported}}%" aria-valuenow="{{ported|length}}" aria-valuemin="0" aria-valuemax="{{count}}">{{ported|length}} files ported ({{"%0.1f"|format(p_ported)}}%)</div>
     <div class="progress-bar bg-warning" role="progressbar" aria-label="In progress"
         title="{{in_progress|length}} files in progress"
         style="width: {{p_in_progress}}%" aria-valuenow="{{in_progress|length}}" aria-valuemin="0" aria-valuemax="{{count}}"></div>
 </div>
-<div class="progress my-1">
+<div class="progress my-1" title="{{l_unported}} lines unported">
     <div class="progress-bar bg-success" role="progressbar" aria-label="Ported"
         title=""
         style="width: {{pl_ported}}%" aria-valuenow="{{l_ported}}" aria-valuemin="0" aria-valuemax="{{l_count}}">{{l_ported}} lines ported ({{"%0.1f"|format(pl_ported)}}%)</div>
