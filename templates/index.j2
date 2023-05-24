@@ -38,8 +38,8 @@
             {%- for f_import, f_data in in_progress.items() %}
                 <tr>
                     <td>
-                        <a href="{{site_url}}/file/{{f_import.replace('.', '/')}}">
-                            <code>{{f_import}}</code></a>
+                        <a href="{{site_url}}/file/{{f_import|join('/')}}">
+                            <code>{{f_import|join('.')}}</code></a>
                     </td>
                     <td>
                         <a href="https://github.com/leanprover-community/mathlib4/pull/{{f_data.status.mathlib4_pr}}">#{{f_data.status.mathlib4_pr}}</a>
@@ -81,8 +81,8 @@
                 {%- set l_parts = f_data.dep_line_counts %}
                 <tr {%- if parts and parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
                     <td>
-                        <a href="{{site_url}}/file/{{f_import.replace('.', '/')}}">
-                            <code>{{f_import}}</code></a>
+                        <a href="{{site_url}}/file/{{f_import|join('/')}}">
+                            <code>{{f_import|join('.')}}</code></a>
                     </td>
                     <td>{{f_data.status.comment.message | htmlify_comment}}</td>
                     <td data-sort="{{f_data.dep_counts_sort_key}}">
@@ -126,8 +126,8 @@
             {%- for f_import, f_data in ported.items() %}
                 <tr>
                     <td>
-                        <a href="{{site_url}}/file/{{f_import.replace('.', '/')}}">
-                            <code>{{f_import}}</code></a>
+                        <a href="{{site_url}}/file/{{f_import|join('/')}}">
+                            <code>{{f_import|join('.')}}</code></a>
                     </td>
                     <td>
                         {%- if f_data.status.source %}

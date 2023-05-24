@@ -70,11 +70,33 @@ def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, 
         commits.insert(0, (c_between, None))
     return commits
 
+def parse_name(name: str) -> tuple[str]:
+    """Parse a lean name including french quotes"""
+    components = re.compile(r"((?:[^.«»]|«.*?»)*)(?:(\.)|$)", re.UNICODE)
+    pos = 0
+    parts = []
+    while True:
+        m = components.match(name, pos=pos)
+        if m:
+            parts.append(m.group(1).replace('«', '').replace('»', ''))
+            if not m.group(2):
+                break
+            pos = m.end()
+        else:
+            raise ValueError(name, pos)
+
+    return tuple(parts)
+
+def name_to_str(parts: tuple[str]) -> str:
+    return '.'.join([
+        '«' + p + '»' if p.isdigit() else p for p in parts
+    ])
+
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
 
-    def mk_label(path: Path) -> str:
-        return '.'.join(path.relative_to(root_path).with_suffix('').parts)
+    def mk_label(path: Path) -> tuple[str]:
+        return tuple(path.relative_to(root_path).with_suffix('').parts)
 
     graph = nx.DiGraph()
 
@@ -90,14 +112,14 @@ def parse_imports(root_path):
         for line in path.read_text().split('\n'):
             m = import_re.match(line)
             if m:
-                imported = m.group(1)
-                if imported.startswith('tactic.') or imported.startswith('meta.'):
+                imported = parse_name(m.group(1))
+                if imported[0] in ('tactic', 'meta'):
                     continue
                 if imported not in graph.nodes:
-                    if imported + '.default' in graph.nodes:
-                        imported = imported + '.default'
+                    if imported + ('default',) in graph.nodes:
+                        imported = imported + ('default',)
                     else:
-                        imported = 'lean_core.' + imported
+                        imported = ('lean_core',) + imported
                 graph.add_edge(imported, label)
     return graph
 
@@ -207,7 +229,7 @@ class Mathlib3FileData:
         unported_deps_names = {'.'.join(d.mathlib3_import) for d in unported_deps}
         g = graph.subgraph(unported_deps_names)
         node_data = {n: d["data"].state.value for (n, d) in g.nodes().items() if "data" in d}
-        return list(g.edges()), node_data
+        return [('.'.join(s), '.'.join(e)) for s, e in g.edges()], node_data
 
 @functools.cache
 def get_repo_by_github_name(url: str) -> git.Repo:
@@ -307,7 +329,11 @@ mathlib_dir = build_dir / 'repos' / 'mathlib'
 mathlib3port_dir = build_dir / 'repos' / 'mathlib3port'
 mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 
-graph = parse_imports(mathlib_dir / 'src')
+graph = functools.reduce(nx.compose, [
+    parse_imports(mathlib_dir / 'src'),
+    parse_imports(mathlib_dir / 'archive'),
+    parse_imports(mathlib_dir / 'counterexamples')
+])
 graph = nx.transitive_reduction(graph)
 
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
@@ -319,23 +345,24 @@ def get_data():
     data = {}
     max_len = max((len(i) for i in port_status), default=0)
     with tqdm(port_status.items(), desc='getting status information') as pbar:
-        for f_import, f_status in pbar:
-            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
-            path = mathlib_dir / 'src' / Path(*f_import.split('.')).with_suffix('.lean')
+        for f_import_s, f_status in pbar:
+            f_import = parse_name(f_import_s)
+            pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
+            path = mathlib_dir / 'src' / Path(*f_import).with_suffix('.lean')
             try:
                 with path.open('r') as f_src:
                     lines = len(f_src.readlines())
             except IOError:
                 lines = None
             data[f_import] = Mathlib3FileData(
-                mathlib3_import=f_import.split('.'),
+                mathlib3_import=f_import,
                 status=f_status,
                 lines=lines
             )
 
     with tqdm(data.items(), desc='building import graph') as pbar:
         for f_import, f_data in pbar:
-            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
+            pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
             if f_import in graph:
                 f_data.dependents = [
                     data[k] for k in nx.descendants(graph, f_import) if k in data
@@ -395,10 +422,10 @@ def make_out_of_sync(env, html_root, mathlib_dir):
     max_len = max((len(i) for i in port_status), default=0)
     with tqdm(data.items(), desc='generating mathlib3 diffs') as pbar:
         for f_import, f_status in pbar:
-            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
+            pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
             if not f_status.status.source or f_status.status.source.repo != 'leanprover-community/mathlib':
                 continue
-            fname = "src" + os.sep + f_import.replace('.', os.sep) + ".lean"
+            fname = "src" + os.sep + os.sep.join(f_import) + ".lean"
             try:
                 sync_commit = mathlib_repo.commit(f_status.status.source.commit)
             except Exception:
@@ -453,9 +480,10 @@ def make_out_of_sync(env, html_root, mathlib_dir):
 
     file_template = env.get_template('file.j2')
     with tqdm(port_status.items(), desc="generating file pages") as pbar:
-        for f_import, f_status in pbar:
-            pbar.set_postfix_str(f_import.ljust(max_len), refresh=False)
-            path = (html_root / 'file' / Path(*f_import.split('.')).with_suffix('.html'))
+        for f_import_s, f_status in pbar:
+            f_import = parse_name(f_import_s)
+            pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
+            path = (html_root / 'file' / Path(*f_import).with_suffix('.html'))
             path.parent.mkdir(exist_ok=True, parents=True)
             with path.open('w') as file_f:
                 if f_status.mathlib4_file is None:
@@ -463,7 +491,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
                 else:
                     mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
                 for chunk in file_template.generate(
-                    mathlib3_import=f_import.split('.'),
+                    mathlib3_import=f_import,
                     mathlib4_import=mathlib4_import,
                     data=get_data().get(f_import),
                     graph=graph,
