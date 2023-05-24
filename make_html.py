@@ -81,7 +81,9 @@ def parse_imports(root_path):
     for path in root_path.glob('**/*.lean'):
         if path.parts[1] in ['tactic', 'meta']:
             continue
-        graph.add_node(mk_label(path))
+        label = mk_label(path)
+        graph.add_node(label)
+        graph.nodes[label]['path'] = path
 
     for path in root_path.glob('**/*.lean'):
         if path.parts[1] in ['tactic', 'meta']:
@@ -322,16 +324,28 @@ shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 def get_data():
     data = {}
     max_len = max((len(i) for i in port_status), default=0)
-    with tqdm(port_status.items(), desc='getting status information') as pbar:
-        for f_import_s, f_status in pbar:
-            f_import = parse_name(f_import_s)
+
+    # normalize keys using the name parser
+    port_status_normed = {parse_name(f_import): f_status for f_import, f_status in port_status.items()}
+    with tqdm(graph, desc='getting status information') as pbar:
+        for f_import in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
             path = mathlib_dir / 'src' / Path(*f_import).with_suffix('.lean')
             try:
+                path = graph[f_import]['path']
                 with path.open('r') as f_src:
                     lines = len(f_src.readlines())
-            except IOError:
+            except (KeyError, IOError):
                 lines = None
+            try:
+                f_status = port_status_normed[f_import]
+            except KeyError:
+                f_status = port_status_yaml.PortStatusEntry(
+                    ported=False,
+                    source=None,
+                    mathlib4_pr=None,
+                    mathlib4_file=None,
+                )
             data[f_import] = Mathlib3FileData(
                 mathlib3_import=f_import,
                 status=f_status,
