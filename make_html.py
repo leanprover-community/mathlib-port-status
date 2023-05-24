@@ -327,6 +327,11 @@ def get_data():
 
     # normalize keys using the name parser
     port_status_normed = {parse_name(f_import): f_status for f_import, f_status in port_status.items()}
+    # add any missing nodes
+    for f_import in port_status_normed:
+        if f_import not in graph:
+            graph.add_node(f_import)
+
     with tqdm(graph, desc='getting status information') as pbar:
         for f_import in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
@@ -471,21 +476,20 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, diff_lines)
 
     file_template = env.get_template('file.j2')
-    with tqdm(port_status.items(), desc="generating file pages") as pbar:
-        for f_import_s, f_status in pbar:
-            f_import = parse_name(f_import_s)
+    with tqdm(data.items(), desc="generating file pages") as pbar:
+        for f_import, f_data in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
             path = (html_root / 'file' / Path(*f_import).with_suffix('.html'))
             path.parent.mkdir(exist_ok=True, parents=True)
             with path.open('w') as file_f:
-                if f_status.mathlib4_file is None:
+                if f_data.status.mathlib4_file is None:
                     mathlib4_import = None
                 else:
-                    mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
+                    mathlib4_import = Path(f_data.status.mathlib4_file).with_suffix('').parts
                 for chunk in file_template.generate(
                     mathlib3_import=f_import,
                     mathlib4_import=mathlib4_import,
-                    data=get_data().get(f_import),
+                    data=f_data,
                     graph=graph,
                 ):
                     file_f.write(chunk)
