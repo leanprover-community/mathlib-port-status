@@ -81,9 +81,7 @@ def parse_imports(root_path):
     for path in root_path.glob('**/*.lean'):
         if path.parts[1] in ['tactic', 'meta']:
             continue
-        label = mk_label(path)
-        graph.add_node(label)
-        graph.nodes[label]['path'] = path
+        graph.add_node(mk_label(path), path = path)
 
     for path in root_path.glob('**/*.lean'):
         if path.parts[1] in ['tactic', 'meta']:
@@ -99,7 +97,7 @@ def parse_imports(root_path):
                     if imported + ('default',) in graph.nodes:
                         imported = imported + ('default',)
                     else:
-                        imported = ('lean_core',) + imported
+                        imported = imported
                 graph.add_edge(imported, label)
     return graph
 
@@ -332,16 +330,17 @@ def get_data():
         if f_import not in graph:
             graph.add_node(f_import)
 
-    with tqdm(graph, desc='getting status information') as pbar:
-        for f_import in pbar:
+    with tqdm(graph.nodes.data('path'), desc='getting status information') as pbar:
+        for f_import, path in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
             path = mathlib_dir / 'src' / Path(*f_import).with_suffix('.lean')
-            try:
-                path = graph[f_import]['path']
-                with path.open('r') as f_src:
-                    lines = len(f_src.readlines())
-            except (KeyError, IOError):
-                lines = None
+            lines = None
+            if path is not None:
+                try:
+                    with path.open('r') as f_src:
+                        lines = len(f_src.readlines())
+                except IOError:
+                    pass
             try:
                 f_status = port_status_normed[f_import]
             except KeyError:
