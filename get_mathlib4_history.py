@@ -17,12 +17,34 @@ source_module_re = re.compile(r"^! .*source module (.*)$")
 commit_re = re.compile(r"^! (leanprover-community/[a-z]*) commit ([0-9a-f]*)")
 import_re = re.compile(r"^import ([^ ]*)")
 
+def parse_name(name: str) -> tuple[str]:
+    """Parse a lean name including french quotes"""
+    components = re.compile(r"((?:[^.«»]|«.*?»)*)(?:(\.)|$)", re.UNICODE)
+    pos = 0
+    parts = []
+    while True:
+        m = components.match(name, pos=pos)
+        if m:
+            parts.append(m.group(1).replace('«', '').replace('»', ''))
+            if not m.group(2):
+                break
+            pos = m.end()
+        else:
+            raise ValueError(name, pos)
+
+    return tuple(parts)
+
+def name_to_str(parts: tuple[str]) -> str:
+    return '.'.join([
+        '«' + p + '»' if p.isdigit() else p for p in parts
+    ])
+
 def get_mathlib4_module_commit_info(contents):
     module = repo = commit = None
     for line in contents:
         m = source_module_re.match(line)
         if m:
-            module = m.group(1)
+            module = parse_name(m.group(1))
         m = commit_re.match(line)
         if m:
             repo = m.group(1)
@@ -38,7 +60,7 @@ def port_info_from_blob(b: git.Blob):
 
 @dataclass
 class FileHistoryEntry:
-    module: str
+    module: tuple[str]
     source: port_status_yaml.PortStatusEntry.Source
     commit: git.Commit
     diff: git.Diff

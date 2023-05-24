@@ -28,7 +28,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 import make_old_html
 import port_status_yaml
 from htmlify_comment import htmlify_comment, htmlify_text
-from get_mathlib4_history import get_history, FileHistoryEntry
+from get_mathlib4_history import get_history, FileHistoryEntry, parse_name, name_to_str
 
 github_token = os.environ.get("GITHUB_TOKEN")
 
@@ -69,28 +69,6 @@ def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, 
     for c_between in base_commit.repo.iter_commits(f'{last.hexsha}..{head_commit.hexsha}^', reverse=True):
         commits.insert(0, (c_between, None))
     return commits
-
-def parse_name(name: str) -> tuple[str]:
-    """Parse a lean name including french quotes"""
-    components = re.compile(r"((?:[^.«»]|«.*?»)*)(?:(\.)|$)", re.UNICODE)
-    pos = 0
-    parts = []
-    while True:
-        m = components.match(name, pos=pos)
-        if m:
-            parts.append(m.group(1).replace('«', '').replace('»', ''))
-            if not m.group(2):
-                break
-            pos = m.end()
-        else:
-            raise ValueError(name, pos)
-
-    return tuple(parts)
-
-def name_to_str(parts: tuple[str]) -> str:
-    return '.'.join([
-        '«' + p + '»' if p.isdigit() else p for p in parts
-    ])
 
 def parse_imports(root_path):
     import_re = re.compile(r"^import ([^ ]*)")
