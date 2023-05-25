@@ -79,7 +79,7 @@ def parse_imports(root_path):
     graph = nx.DiGraph()
 
     for path in root_path.glob('**/*.lean'):
-        graph.add_node(mk_label(path), path = path)
+        graph.add_node(mk_label(path), path=path)
 
     for path in root_path.glob('**/*.lean'):
         label = mk_label(path)
@@ -314,7 +314,9 @@ graph = functools.reduce(nx.compose, [
     parse_imports(mathlib_dir / 'archive'),
     parse_imports(mathlib_dir / 'counterexamples')
 ])
-graph = nx.transitive_reduction(graph)
+tr_graph = nx.transitive_reduction(graph)
+tr_graph.add_nodes_from(graph.nodes(data=True))
+graph = tr_graph
 
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
 
@@ -341,7 +343,6 @@ def get_data():
     with tqdm(graph.nodes.data('path'), desc='getting status information') as pbar:
         for f_import, path in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
-            path = mathlib_dir / 'src' / Path(*f_import).with_suffix('.lean')
             lines = None
             if path is not None:
                 try:
