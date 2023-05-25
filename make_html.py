@@ -87,6 +87,12 @@ def parse_imports(root_path):
             m = import_re.match(line)
             if m:
                 imported = parse_name(m.group(1))
+                if imported[0] == '':
+                    rel = label
+                    while imported[0] == '':
+                        imported = imported[1:]
+                        rel = rel[:-1]
+                    imported = rel + imported
                 if imported not in graph.nodes:
                     if imported + ('default',) in graph.nodes:
                         imported = imported + ('default',)
@@ -321,7 +327,10 @@ def get_data():
     max_len = max((len(i) for i in port_status), default=0)
 
     # normalize keys using the name parser
-    port_status_normed = {parse_name(f_import): f_status for f_import, f_status in port_status.items()}
+    port_status_normed = {}
+    for f_import, f_status in port_status.items():
+        f_import = parse_name(f_import)
+        port_status_normed[f_import] = f_status
     # add any missing nodes
     for f_import in port_status_normed:
         if f_import not in graph:
