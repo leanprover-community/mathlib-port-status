@@ -79,26 +79,22 @@ def parse_imports(root_path):
     graph = nx.DiGraph()
 
     for path in root_path.glob('**/*.lean'):
-        if path.parts[1] in ['tactic', 'meta']:
-            continue
         graph.add_node(mk_label(path), path = path)
 
     for path in root_path.glob('**/*.lean'):
-        if path.parts[1] in ['tactic', 'meta']:
-            continue
         label = mk_label(path)
         for line in path.read_text().split('\n'):
             m = import_re.match(line)
             if m:
                 imported = parse_name(m.group(1))
-                if imported[0] in ('tactic', 'meta'):
-                    continue
                 if imported not in graph.nodes:
                     if imported + ('default',) in graph.nodes:
                         imported = imported + ('default',)
                     else:
                         imported = imported
                 graph.add_edge(imported, label)
+            elif line.startswith('/--'):
+                break
     return graph
 
 class PortState(Enum):
@@ -320,6 +316,7 @@ shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 
 @functools.cache
 def get_data():
+    global graph
     data = {}
     max_len = max((len(i) for i in port_status), default=0)
 
@@ -329,6 +326,8 @@ def get_data():
     for f_import in port_status_normed:
         if f_import not in graph:
             graph.add_node(f_import)
+
+    graph = graph.subgraph({n for n in graph if n[0] not in ['tactic', 'meta']})
 
     with tqdm(graph.nodes.data('path'), desc='getting status information') as pbar:
         for f_import, path in pbar:
