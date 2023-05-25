@@ -80,7 +80,7 @@ def get_history(repo: git.Repo, root='Mathlib', rev=None, desc='Getting mathlib4
 
     last = _NULL_TREE(repo)
     with tqdm(repo.iter_commits(rev=rev, paths=[root], first_parent=True, reverse=True),
-            desc='Getting mathlib4 history') as pbar:
+            desc=desc) as pbar:
         for commit in pbar:
             pbar.set_postfix_str(datetime.datetime.fromtimestamp(commit.committed_date).isoformat(), refresh=False)
             diffs = last.diff(commit, create_patch=True)
