@@ -206,7 +206,7 @@ class Mathlib3FileData:
     @property
     def dep_graph_data(self) -> Tuple[List[Tuple[str, str]], Dict[str, PortState]]:
         unported_deps = [self] + [d for d in self.dependencies if d.state !=  PortState.PORTED]
-        unported_deps_names = {'.'.join(d.mathlib3_import) for d in unported_deps}
+        unported_deps_names = {d.mathlib3_import for d in unported_deps}
         g = graph.subgraph(unported_deps_names)
         node_data = {'.'.join(n): d["data"].state.value for (n, d) in g.nodes().items() if "data" in d}
         return [('.'.join(s), '.'.join(e)) for s, e in g.edges()], node_data
