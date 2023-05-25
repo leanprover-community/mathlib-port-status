@@ -70,7 +70,7 @@ def commits_and_diffs_between(base_commit: git.Commit, head_commit: git.Commit, 
         commits.insert(0, (c_between, None))
     return commits
 
-def parse_imports(root_path):
+def parse_imports(root_path, name: Optional[str] = None):
     import_re = re.compile(r"^import ([^ ]*)")
 
     def mk_label(path: Path) -> tuple[str]:
@@ -79,26 +79,28 @@ def parse_imports(root_path):
     graph = nx.DiGraph()
 
     for path in root_path.glob('**/*.lean'):
-        if path.parts[1] in ['tactic', 'meta']:
-            continue
-        graph.add_node(mk_label(path))
+        graph.add_node(mk_label(path), path=path, project=name)
 
     for path in root_path.glob('**/*.lean'):
-        if path.parts[1] in ['tactic', 'meta']:
-            continue
         label = mk_label(path)
         for line in path.read_text().split('\n'):
             m = import_re.match(line)
             if m:
                 imported = parse_name(m.group(1))
-                if imported[0] in ('tactic', 'meta'):
-                    continue
+                if imported[0] == '':
+                    rel = label
+                    while imported[0] == '':
+                        imported = imported[1:]
+                        rel = rel[:-1]
+                    imported = rel + imported
                 if imported not in graph.nodes:
                     if imported + ('default',) in graph.nodes:
                         imported = imported + ('default',)
                     else:
-                        imported = ('lean_core',) + imported
+                        imported = imported
                 graph.add_edge(imported, label)
+            elif line.startswith('/--') or line.startswith('/-!'):
+                break
     return graph
 
 class PortState(Enum):
@@ -137,6 +139,7 @@ class ForwardPortInfo:
 @dataclass
 class Mathlib3FileData:
     mathlib3_import: List[str]
+    lean3_project_name: Optional[str]
     status: port_status_yaml.PortStatusEntry
     lines: Optional[int]
     dependents: Optional[List['Mathlib3FileData']] = None
@@ -281,7 +284,7 @@ port_status = port_status_yaml.load()
 build_dir = Path('build')
 build_dir.mkdir(parents=True, exist_ok=True)
 
-def si_ify(n : int):
+def si_ify(n: int):
     if n < 1000:
         return str(n)
     n = n // 1000
@@ -289,6 +292,15 @@ def si_ify(n : int):
         return str(n) + 'k'
     n = n // 1000
     return str(n) + 'M'
+
+def project_prefix(d) -> str:
+    s = d.lean3_project_name
+    if s == 'mathlib':
+        return ''
+    elif s is None:
+        return 'core: '
+    else:
+        return s + ': '
 
 template_loader = jinja2.FileSystemLoader(searchpath="templates/")
 template_env = jinja2.Environment(loader=template_loader, autoescape=True)
@@ -298,6 +310,7 @@ template_env.filters['link_sha'] = link_sha
 template_env.filters['set'] = set
 template_env.filters['text_color_of_color'] = text_color_of_color
 template_env.filters['si_ify'] = si_ify
+template_env.filters['project_prefix'] = project_prefix
 template_env.globals['site_url'] = os.environ.get('SITE_URL', '')
 template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
@@ -308,11 +321,13 @@ mathlib3port_dir = build_dir / 'repos' / 'mathlib3port'
 mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 
 graph = functools.reduce(nx.compose, [
-    parse_imports(mathlib_dir / 'src'),
-    parse_imports(mathlib_dir / 'archive'),
-    parse_imports(mathlib_dir / 'counterexamples')
+    parse_imports(mathlib_dir / 'src', name='mathlib'),
+    parse_imports(mathlib_dir / 'archive', name='archive'),
+    parse_imports(mathlib_dir / 'counterexamples', name='counterexamples')
 ])
-graph = nx.transitive_reduction(graph)
+tr_graph = nx.transitive_reduction(graph)
+tr_graph.add_nodes_from(graph.nodes(data=True))
+graph = tr_graph
 
 (build_dir / 'html').mkdir(parents=True, exist_ok=True)
 
@@ -320,20 +335,47 @@ shutil.copytree(Path('static'), build_dir / 'html', dirs_exist_ok=True)
 
 @functools.cache
 def get_data():
+    global graph
     data = {}
     max_len = max((len(i) for i in port_status), default=0)
-    with tqdm(port_status.items(), desc='getting status information') as pbar:
-        for f_import_s, f_status in pbar:
-            f_import = parse_name(f_import_s)
+
+    # normalize keys using the name parser
+    port_status_normed = {}
+    for f_import, f_status in port_status.items():
+        f_import = parse_name(f_import)
+        if f_import[0] == 'lean_core':
+            f_import = f_import[1:]
+        port_status_normed[f_import] = f_status
+    # add any missing nodes
+    for f_import in port_status_normed:
+        if f_import not in graph:
+            graph.add_node(f_import)
+
+    graph = graph.subgraph({n for n in graph if n[0] not in ['tactic', 'meta']})
+
+    with tqdm(graph.nodes(data=True), desc='getting status information') as pbar:
+        for f_import, node_data in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
-            path = mathlib_dir / 'src' / Path(*f_import).with_suffix('.lean')
+            lines = None
+            path = node_data.get('path')
+            if path is not None:
+                try:
+                    with path.open('r') as f_src:
+                        lines = len(f_src.readlines())
+                except IOError:
+                    pass
             try:
-                with path.open('r') as f_src:
-                    lines = len(f_src.readlines())
-            except IOError:
-                lines = None
+                f_status = port_status_normed[f_import]
+            except KeyError:
+                f_status = port_status_yaml.PortStatusEntry(
+                    ported=False,
+                    source=None,
+                    mathlib4_pr=None,
+                    mathlib4_file=None,
+                )
             data[f_import] = Mathlib3FileData(
                 mathlib3_import=f_import,
+                lean3_project_name=node_data.get('project'),
                 status=f_status,
                 lines=lines
             )
@@ -457,21 +499,20 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, diff_lines)
 
     file_template = env.get_template('file.j2')
-    with tqdm(port_status.items(), desc="generating file pages") as pbar:
-        for f_import_s, f_status in pbar:
-            f_import = parse_name(f_import_s)
+    with tqdm(data.items(), desc="generating file pages") as pbar:
+        for f_import, f_data in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
             path = (html_root / 'file' / Path(*f_import).with_suffix('.html'))
             path.parent.mkdir(exist_ok=True, parents=True)
             with path.open('w') as file_f:
-                if f_status.mathlib4_file is None:
+                if f_data.status.mathlib4_file is None:
                     mathlib4_import = None
                 else:
-                    mathlib4_import = Path(f_status.mathlib4_file).with_suffix('').parts
+                    mathlib4_import = Path(f_data.status.mathlib4_file).with_suffix('').parts
                 for chunk in file_template.generate(
                     mathlib3_import=f_import,
                     mathlib4_import=mathlib4_import,
-                    data=get_data().get(f_import),
+                    data=f_data,
                     graph=graph,
                 ):
                     file_f.write(chunk)

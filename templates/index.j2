@@ -38,7 +38,7 @@
             {%- for f_import, f_data in in_progress.items() %}
                 <tr>
                     <td>
-                        <a href="{{site_url}}/file/{{f_import|join('/')}}">
+                        {{f_data | project_prefix}}<a href="{{site_url}}/file/{{f_import|join('/')}}">
                             <code>{{f_import|join('.')}}</code></a>
                     </td>
                     <td>
@@ -81,7 +81,7 @@
                 {%- set l_parts = f_data.dep_line_counts %}
                 <tr {%- if parts and parts[0] == 0 %} class="table-{% if parts[1] == 0 %}success{% else %}warning{%endif%}"{%endif%}>
                     <td>
-                        <a href="{{site_url}}/file/{{f_import|join('/')}}">
+                        {{f_data | project_prefix}}<a href="{{site_url}}/file/{{f_import|join('/')}}">
                             <code>{{f_import|join('.')}}</code></a>
                     </td>
                     <td>{{f_data.status.comment.message | htmlify_comment}}</td>
@@ -126,7 +126,7 @@
             {%- for f_import, f_data in ported.items() %}
                 <tr>
                     <td>
-                        <a href="{{site_url}}/file/{{f_import|join('/')}}">
+                        {{f_data | project_prefix}}<a href="{{site_url}}/file/{{f_import|join('/')}}">
                             <code>{{f_import|join('.')}}</code></a>
                     </td>
                     <td>
