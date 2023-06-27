@@ -298,7 +298,7 @@ def project_prefix(d) -> str:
     if s == 'mathlib':
         return ''
     elif s is None:
-        return 'core: '
+        return 'u: '
     else:
         return s + ': '
 
@@ -351,7 +351,7 @@ def get_data():
         if f_import not in graph:
             graph.add_node(f_import)
 
-    graph = graph.subgraph({n for n in graph if n[0] not in ['tactic', 'meta']})
+    graph = graph.subgraph({n for n in graph if n[0] not in ['tactic', 'meta'] and not (n[0] == "init" and n[1] == "meta")})
 
     with tqdm(graph.nodes(data=True), desc='getting status information') as pbar:
         for f_import, node_data in pbar:
