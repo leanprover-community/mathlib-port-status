@@ -298,7 +298,7 @@ def project_prefix(d) -> str:
     if s == 'mathlib':
         return ''
     elif s is None:
-        return 'u: '
+        return 'core: '
     else:
         return s + ': '
 
