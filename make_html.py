@@ -214,7 +214,9 @@ class Mathlib3FileData:
 
 @functools.cache
 def get_repo_by_github_name(url: str) -> git.Repo:
-    if url == 'leanprover-community/mathlib':
+    if url == 'leanprover-community/lean':
+        return git.Repo(lean_dir)
+    elif url == 'leanprover-community/mathlib':
         return git.Repo(mathlib_dir)
     elif url == 'leanprover-community/mathlib4':
         return git.Repo(mathlib4_dir)
@@ -316,11 +318,13 @@ template_env.globals['PortState'] = PortState
 template_env.globals['nx'] = nx
 template_env.globals['now'] = datetime.datetime.utcnow()
 
+lean_dir = build_dir / 'repos' / 'lean'
 mathlib_dir = build_dir / 'repos' / 'mathlib'
 mathlib3port_dir = build_dir / 'repos' / 'mathlib3port'
 mathlib4_dir = build_dir / 'repos' / 'mathlib4'
 
 graph = functools.reduce(nx.compose, [
+    parse_imports(lean_dir / 'library', name='core'),
     parse_imports(mathlib_dir / 'src', name='mathlib'),
     parse_imports(mathlib_dir / 'archive', name='archive'),
     parse_imports(mathlib_dir / 'counterexamples', name='counterexamples')
