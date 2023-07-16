@@ -12,7 +12,8 @@ tasks:
       (mkdir -p build/repos && cd build/repos && \
         git clone https://github.com/leanprover-community/mathlib && \
         git clone https://github.com/leanprover-community/mathlib4 && \
-        git clone https://github.com/leanprover-community/mathlib3port)
+        git clone https://github.com/leanprover-community/mathlib3port &&
+        git clone https://github.com/leanprover-community/lean)
     command: |
       python make_html.py
       cd build/html && python -m http.server
