@@ -115,11 +115,11 @@ class ForwardPortInfo:
     all_ported_commits: List[Tuple[git.Commit, git.Diff, bool]]
     diff_lines: List[str]
 
-    @property
+    @functools.cached_property
     def ported_commits(self):
         return [(c, d, p) for c, d, p in self.all_ported_commits if d is not None]
 
-    @property
+    @functools.cached_property
     def unported_commits(self):
         return [(c, d, p) for c, d, p in self.all_unported_commits if d is not None]
 
