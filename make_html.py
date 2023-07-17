@@ -149,7 +149,7 @@ class Mathlib3FileData:
     mathlib4_history: List[FileHistoryEntry] = field(default_factory=list)
     mathlib3port_history: List[FileHistoryEntry] = field(default_factory=list)
 
-    @property
+    @functools.cached_property
     def mathlib3_file(self) -> Path:
         # todo: doesn't work for lean3 core
         return Path('src', *self.mathlib3_import).with_suffix('.lean')
