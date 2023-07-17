@@ -269,8 +269,7 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit], pa
                 (' class="font-monospace text-danger" title="commit does not seem to exist!"' if not valid else
                  ' class="font-monospace"') +
                 '>{short_sha}</a>'
-        ).format(url=url, short_sha=sha.commit[:8],
-            extra=' class="text-danger" title="commit does not seem to exist!"' if not valid else '')
+        ).format(url=url, short_sha=sha.commit[:8])
     else:
         return Markup('<span title="Unknown" class="text-danger">???</span>')
 
