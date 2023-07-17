@@ -13,6 +13,7 @@ from typing import Optional, List, Dict, Union, Tuple
 import os
 import warnings
 import logging
+import html
 
 import dacite
 import git
@@ -108,6 +109,7 @@ class PortState(Enum):
     IN_PROGRESS = 'IN_PROGRESS'
     PORTED = 'PORTED'
 
+
 @dataclass
 class ForwardPortInfo:
     base_commit: git.Commit
@@ -115,11 +117,11 @@ class ForwardPortInfo:
     all_ported_commits: List[Tuple[git.Commit, git.Diff, bool]]
     diff_lines: List[str]
 
-    @property
+    @functools.cached_property
     def ported_commits(self):
         return [(c, d, p) for c, d, p in self.all_ported_commits if d is not None]
 
-    @property
+    @functools.cached_property
     def unported_commits(self):
         return [(c, d, p) for c, d, p in self.all_unported_commits if d is not None]
 
@@ -264,12 +266,15 @@ def link_sha(sha: Union[port_status_yaml.PortStatusEntry.Source, git.Commit], pa
             # https://github.com/orgs/community/discussions/43908#discussioncomment-4651001
             url = f"{url}#diff-{hashlib.sha256(str(path).encode('utf8')).hexdigest()}"
 
-        return Markup(
-            '<a href="{url}"' +
-                (' class="font-monospace text-danger" title="commit does not seem to exist!"' if not valid else
-                 ' class="font-monospace"') +
-                '>{short_sha}</a>'
-        ).format(url=url, short_sha=sha.commit[:8])
+        # note: `str.__new__` is faster than the constructor, and `html.escape` is faster than
+        # `Markup.format`
+        return str.__new__(Markup,
+            f'<a href="{html.escape(url)}"' +
+            (' class="font-monospace text-danger" title="commit does not seem to exist!"' if not valid else
+                ' class="font-monospace"') +
+            f'>{html.escape(sha.commit[:8])}</a>'
+        )
+
     else:
         return Markup('<span title="Unknown" class="text-danger">???</span>')
 
@@ -502,6 +507,7 @@ def make_out_of_sync(env, html_root, mathlib_dir):
             data[f_import].forward_port = ForwardPortInfo(base_commit, unported_commits, ported_commits, diff_lines)
 
     file_template = env.get_template('file.j2')
+
     with tqdm(data.items(), desc="generating file pages") as pbar:
         for f_import, f_data in pbar:
             pbar.set_postfix_str(name_to_str(f_import).ljust(max_len), refresh=False)
