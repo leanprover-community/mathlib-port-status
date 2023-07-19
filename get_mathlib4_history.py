@@ -17,6 +17,9 @@ source_module_re = re.compile(r"^! .*source module (.*)$")
 commit_re = re.compile(r"^! (leanprover-community/[a-z]*) commit ([0-9a-f]*)")
 import_re = re.compile(r"^import ([^ ]*)")
 
+align_import_re = re.compile(
+    r'^#align_import ([^ ]*) from "(leanprover-community/[a-z]*)" ?@ ?"([0-9a-f]*)"')
+
 def parse_name(name: str) -> tuple[str]:
     """Parse a lean name including french quotes"""
     components = re.compile(r"((?:[^.«»]|«.*?»)*)(?:(\.)|$)", re.UNICODE)
@@ -46,10 +49,18 @@ def get_mathlib4_module_commit_info(contents):
         if m:
             module = parse_name(m.group(1))
         m = commit_re.match(line)
-        if m:
+        if m and module:
             repo = m.group(1)
             commit = m.group(2)
-        if import_re.match(line):
+            break
+
+        m = align_import_re.match(line)
+        if m:
+            module = parse_name(m.group(1))
+            repo = m.group(2)
+            commit = m.group(3)
+            # TODO: parse multiple `#align_import`s? We don't want to read the whole file unless we
+            # have to.
             break
     return module, repo, commit
 
