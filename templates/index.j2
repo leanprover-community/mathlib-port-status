@@ -21,6 +21,14 @@
 {% block body %}
     <div class="container">
         {{ progress.bars(all) }}
+        <div class="alert alert-success">
+        As of 2023-07-16, the port of mathlib to Lean4 has been <a href="https://leanprover.zulipchat.com/#narrow/stream/287929-mathlib4/topic/port.20progress/near/375639225">declared complete</a> 🎉!
+        </div>
+        <p>Note that the tables below still show:</p>
+        <ul>
+            <li>Some files in <q>core</q>. These represent files from <a href="https://github.com/leanprover-community/lean">the Lean 3 repo</a> that have most likely either been absorbed into Lean 4. If you find you need a lemma from one of these files but can't find it elsewhere, consider porting it.</li>
+            <li>Any files that were added to mathlib3 after the freeze. These should be ported alongside the updates on the <a href="out-of-sync">out of sync</a> page.</li>
+        </ul>
         <h2>In progress files</h2>
         <p>See also <a href="https://github.com/leanprover-community/mathlib4/pulls?q=is%3Apr+is%3Aopen+label%3Amathlib-port">the open mathlib-port PRs</a> on GitHub.</a>
         <div class="table-responsive"><table class="table table-sm main-table in-progress-table" data-order="[[4, &quot;desc&quot;]]" data-language="{&quot;emptyTable&quot;: &quot;goals accomplished 🎉&quot;}">
